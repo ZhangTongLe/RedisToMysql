@@ -68,54 +68,57 @@ public class Redis_To_Mysql {
 				data_time=TimeFormatter.getNow(); 	//获取当前时间YYYY-MM-DD HH:mm:ss
 				day=TimeFormatter.getDate(); 			//当天日期 YYYYMMDD，删除mysql对应的当天记录		
 				cdate=data_time.substring(0,10);        //获取当前日期YYYY-MM-DD
+				num=0;	
+				conn=null;			
+				File file = null;
+				
 				keys=redisserver.keys("mfg4_"+cdate+"_hspset_*"); 				//获取所有的hotspot对应的imsi集合
-				num=0;
-				
-				conn=null;
-				
-				filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_flow_today.txt";
-				File file = new File(filepath);
-				if (!file.isDirectory()) { 
-					fw=new FileWriter(file);
-					fw.write("");
-					keylist = keys.iterator();
-					while(keylist.hasNext())
-					{
-						key=keylist.next().toString();
-						keysplit=key.split("_");
-						if(keysplit.length==6)
+				if(keys!=null&&keys.size()>0)
+				{
+					filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_flow_today.txt";
+					file = new File(filepath);
+					if (!file.isDirectory()) { 
+						fw=new FileWriter(file);
+						fw.write("");
+						keylist = keys.iterator();
+						while(keylist.hasNext())
 						{
-							id=keysplit[5];  						//hotspotid
-							hour=keysplit[3]; 						//hour
-							minute=keysplit[4]; 					//minute
-							pcnt=redisserver.scard(key);
-							if(pcnt<0)pcnt=0;
-							people_cnt=String.valueOf(pcnt); //people_cnt
-							key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id;
-							net_flow=redisserver.get(key);
-							if(net_flow!=null)dnflow=Double.valueOf(net_flow);
-							lnflow=(long)dnflow;
-							net_flow=String.valueOf(lnflow);  //net_flow
-							key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','"+lnflow+"'\n";
-							fw.write(key);
-							num=num+1;
+							key=keylist.next().toString();
+							keysplit=key.split("_");
+							if(keysplit.length==6)
+							{
+								id=keysplit[5];  						//hotspotid
+								hour=keysplit[3]; 						//hour
+								minute=keysplit[4]; 					//minute
+								pcnt=redisserver.scard(key);
+								if(pcnt<0)pcnt=0;
+								people_cnt=String.valueOf(pcnt); //people_cnt
+								key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id;
+								net_flow=redisserver.get(key);
+								if(net_flow!=null)dnflow=Double.valueOf(net_flow);
+								lnflow=(long)dnflow;
+								net_flow=String.valueOf(lnflow);  //net_flow
+								key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','"+lnflow+"'\n";
+								fw.write(key);
+								num=num+1;
+							}
 						}
-					}
-					fw.close();
-			    }	
-				logger.info(" Complete get hotspot redis-keys, get "+num+" records");	
+						fw.close();
+				    }	
+					logger.info(" Complete get hotspot redis-keys, get "+num+" records");	
+					
+					
+					Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
+					conn=DriverManager.getConnection(url);
+					stmt =conn.createStatement();
+					sql="delete from tb_mofang_hotspot_flow_today where day='"+day+"'";
+					stmt.execute(sql);
+					sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
+					stmt.execute(sql);
+					conn.close();	
+					logger.info(" Set into mysql ok");
+				}
 				
-				
-				Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
-				conn=DriverManager.getConnection(url);
-				stmt =conn.createStatement();
-				sql="delete from tb_mofang_hotspot_flow_today where day='"+day+"'";
-				stmt.execute(sql);
-				sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
-				stmt.execute(sql);
-				conn.close();	
-				logger.info(" Set into mysql ok");
-
 				//释放内存
 				redisserver=null;
 				keys=null;
@@ -135,6 +138,7 @@ public class Redis_To_Mysql {
 				num=0;
 				net_flow=null;
 				filepath=null;
+				file=null;
 				fw=null;
 				
 				conn=null;

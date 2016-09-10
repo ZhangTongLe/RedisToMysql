@@ -123,7 +123,7 @@ public class RedisServer {
                 logger.info(" Getting keys error: ", e);  
             } finally{  
                 logger.info(" "+connection.getClient().getHost() +":"+connection.getClient().getPort()+" Connection closed.");  
-                connection.close();//用完一定要close这个链接！！！  
+                connection.close();//用完一定要close这个链接！！！
             }  
         }  
         return keys;  
