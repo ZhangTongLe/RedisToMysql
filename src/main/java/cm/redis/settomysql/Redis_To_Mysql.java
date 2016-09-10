@@ -85,7 +85,7 @@ public class Redis_To_Mysql {
 						keysplit=key.split("_");
 						if(keysplit.length==6)
 						{
-							id=keysplit[5];  							//hotspotid
+							id=keysplit[5];  						//hotspotid
 							hour=keysplit[3]; 						//hour
 							minute=keysplit[4]; 					//minute
 							pcnt=redisserver.scard(key);
@@ -105,21 +105,17 @@ public class Redis_To_Mysql {
 			    }	
 				logger.info(" Complete get hotspot redis-keys, get "+num+" records");	
 				
-				try{
-					Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
-					conn=DriverManager.getConnection(url);
-					stmt =conn.createStatement();
-					sql="delete from tb_mofang_hotspot_flow_today where day='"+day+"'";
-					stmt.execute(sql);
-					sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
-					stmt.execute(sql);
-					logger.info(" Set into mysql ok");
-				}catch(Exception e){
-					logger.info(" Thread Redis_To_Mysql crashes: "+e.getMessage());
-				}finally {
-					conn.close();
-				}
 				
+				Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
+				conn=DriverManager.getConnection(url);
+				stmt =conn.createStatement();
+				sql="delete from tb_mofang_hotspot_flow_today where day='"+day+"'";
+				stmt.execute(sql);
+				sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
+				stmt.execute(sql);
+				conn.close();	
+				logger.info(" Set into mysql ok");
+
 				//释放内存
 				redisserver=null;
 				keys=null;
@@ -149,7 +145,5 @@ public class Redis_To_Mysql {
 		} catch (Exception e) {
 			logger.info(" Thread Flush_Redis_DB crashes: "+e.getMessage());
 		}
-		
-		
 	}
 }
