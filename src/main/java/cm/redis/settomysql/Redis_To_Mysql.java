@@ -59,7 +59,6 @@ public class Redis_To_Mysql {
 		String url=ResourcesConfig.MYSQL_SERVER_URL+"?user="+ ResourcesConfig.MYSQL_USER
 				+"&password="+ResourcesConfig.MYSQL_PASSWD+"&characterEncoding=UTF8";
 		Statement stmt=null;
-		boolean sqlok=false;
 		try {
 			while(true)
 			{
@@ -110,8 +109,10 @@ public class Redis_To_Mysql {
 					Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
 					conn=DriverManager.getConnection(url);
 					stmt =conn.createStatement();
+					sql="delete * from table tb_mofang_hotspot_flow_today where day='"+day+"'";
+					stmt.execute(sql);
 					sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
-					sqlok=stmt.execute(sql);
+					stmt.execute(sql);
 					logger.info(" Set into mysql ok");
 				}catch(Exception e){
 					logger.info(" Thread Redis_To_Mysql crashes: "+e.getMessage());
