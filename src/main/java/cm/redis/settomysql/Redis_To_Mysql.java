@@ -109,7 +109,7 @@ public class Redis_To_Mysql {
 					Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
 					conn=DriverManager.getConnection(url);
 					stmt =conn.createStatement();
-					sql="delete * from tb_mofang_hotspot_flow_today where day='"+day+"'";
+					sql="delete from tb_mofang_hotspot_flow_today where day='"+day+"'";
 					stmt.execute(sql);
 					sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
 					stmt.execute(sql);
