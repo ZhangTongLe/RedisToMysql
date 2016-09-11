@@ -406,11 +406,11 @@ public class Redis_To_Mysql {
 		FileWriter fw=null;
 		
 		//数据库操作相关参数
-		Connection conn=null;
-		String sql=null;
-		String url=ResourcesConfig.MYSQL_SERVER_URL+"?user="+ ResourcesConfig.MYSQL_USER
-				+"&password="+ResourcesConfig.MYSQL_PASSWD+"&characterEncoding=UTF8";
-		Statement stmt=null;
+//		Connection conn=null;
+//		String sql=null;
+//		String url=ResourcesConfig.MYSQL_SERVER_URL+"?user="+ ResourcesConfig.MYSQL_USER
+//				+"&password="+ResourcesConfig.MYSQL_PASSWD+"&characterEncoding=UTF8";
+//		Statement stmt=null;
 
 		logger.info(" Start to get heapmap clock info redis-keys");
 		try{
@@ -457,18 +457,18 @@ public class Redis_To_Mysql {
 					}
 					fw.close();
 					logger.info(" Complete get heapmap clock info, get "+num+" records");
-					if(num>0)//有数据存在才考虑进行数据库录入
-					{
-						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
-						conn=DriverManager.getConnection(url);
-						stmt =conn.createStatement();
-						sql="delete from tb_mofang_heapmap_ref";
-						stmt.execute(sql);
-						sql="load data local infile '"+filepath+"' replace into table tb_mofang_heapmap_ref fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
-						stmt.execute(sql);
-						conn.close();	
-						logger.info(" Set heapmap clock info into mysql ok");
-					}
+//					if(num>0)//有数据存在才考虑进行数据库录入
+//					{
+//						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
+//						conn=DriverManager.getConnection(url);
+//						stmt =conn.createStatement();
+//						sql="delete from tb_mofang_heapmap_ref";
+//						stmt.execute(sql);
+//						sql="load data local infile '"+filepath+"' replace into table tb_mofang_heapmap_ref fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
+//						stmt.execute(sql);
+//						conn.close();	
+//						logger.info(" Set heapmap clock info into mysql ok");
+//					}
 			    }
 			}else{
 				logger.info(" Can't get redis heapmap clock info keys.");	
@@ -499,9 +499,9 @@ public class Redis_To_Mysql {
 		file=null;
 		fw=null;
 		
-		conn=null;
-		sql=null;
-		stmt=null;
+//		conn=null;
+//		sql=null;
+//		stmt=null;
 	}
 		
 	
