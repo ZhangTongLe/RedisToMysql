@@ -87,7 +87,7 @@ public class Redis_To_Mysql {
 							keysplit=key.split("_");
 							if(keysplit.length==6)
 							{
-								id=keysplit[5];  						//hotspotid
+								id=keysplit[5];  							//hotspotid
 								hour=keysplit[3]; 						//hour
 								minute=keysplit[4]; 					//minute
 								pcnt=redisserver.scard(key);
