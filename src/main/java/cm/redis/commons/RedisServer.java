@@ -1,6 +1,5 @@
 package cm.redis.commons;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -9,9 +8,7 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 import cm.redis.commons.ResourcesConfig;
-import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.SortingParams;
@@ -22,12 +19,9 @@ import redis.clients.jedis.SortingParams;
  *
  */
 public class RedisServer {
-	//构建集群连接对象实例
-	private static JedisCluster jedisCluster;
-	
-	//获取集群子节点
-	private static Map<String, JedisPool> clusterNodes;  
-	
+	//构建redis连接池对象实例
+	private static JedisPool jedisPool=null;
+
 	//单例模式实现客户端管理类
 	private static RedisServer INSTANCE=new RedisServer();
 
@@ -36,28 +30,16 @@ public class RedisServer {
 	//初始化构造函数
 	private RedisServer()
 	{
-		Set<HostAndPort> jedisClusterNodes = new HashSet<HostAndPort>();
-		//只需要配置集群中的一个结点，连接成功后，自动获取点集群中其他结点信息
-		jedisClusterNodes.add(new HostAndPort(ResourcesConfig.REDIS_SERVER_IP, 
-				Integer.valueOf(ResourcesConfig.REDIS_SERVER_PORT)));
-		
-		
-		//构建Cluster的连接池配置参数
-		JedisPoolConfig config = new JedisPoolConfig();
-        config.setMaxTotal(ResourcesConfig.MAX_ACTIVE);
-        config.setMaxIdle(ResourcesConfig.MAX_IDLE);
-        config.setMinIdle(ResourcesConfig.MIN_IDLE);
-        config.setMaxWaitMillis(ResourcesConfig.MAX_WAIT);
-        config.setTestOnBorrow(ResourcesConfig.TEST_ON_BORROW);
-        
-        //新建JedisCluster连接
-        jedisCluster=new JedisCluster(jedisClusterNodes,
-        		ResourcesConfig.CLUSTER_TIMEOUT,
-        		ResourcesConfig.CLUSTER_MAX_REDIRECTIONS, 
-        		config);
-        
-        //获取所有集群子节点
-        clusterNodes=jedisCluster.getClusterNodes();
+		if(jedisPool==null)
+		{
+			//构建jedis连接池配置参数
+			JedisPoolConfig config = new JedisPoolConfig();
+	        config.setMaxTotal(ResourcesConfig.MAX_ACTIVE);
+	        config.setMaxIdle(ResourcesConfig.MAX_IDLE);
+	        config.setMaxWaitMillis(ResourcesConfig.MAX_WAIT);
+	        config.setTestOnBorrow(ResourcesConfig.TEST_ON_BORROW);
+	        jedisPool=new JedisPool(config,ResourcesConfig.REDIS_SERVER_IP, ResourcesConfig.REDIS_SERVER_PORT,ResourcesConfig.TIMEOUT);
+		}
 	}
 	
 	/**
@@ -68,15 +50,15 @@ public class RedisServer {
 		return INSTANCE;
 	}
 	
-	//关闭会话，销毁jediscluster对象
-	public static void close(){
+	//关闭连接池，销毁连接池，在web清理时进行调用
+	public void close(){
 		 try {
-			 if(jedisCluster!=null)jedisCluster.close();
+			 if(jedisPool!=null)jedisPool.close();
 		} catch (Exception e) {
-			logger.error("Close jediscluster error: ", e);  
+			logger.error("Close jedisPool error: ", e);  
 		}
 	}
-	
+
 	/*通用key操作*/
 	/**
 	 * 判断key值是否存在
@@ -84,14 +66,16 @@ public class RedisServer {
 	 * @return true为存在，false为不存在
 	 */
 	public boolean exists(String key){
-		boolean exists=false;
+		Jedis jedis=null;
 		try{
-			exists=jedisCluster.exists(key);
-		}catch (Exception e) {
-			logger.error("Jediscluster opt exists error: ", e); 
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.exists(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return false;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return exists;
 	}
 	
 	/**
@@ -100,72 +84,73 @@ public class RedisServer {
 	 * @return 被删除的键的数目
 	 */
 	public long del(String key){
-		long delnum=0;
+		Jedis jedis=null;
 		try{
-			delnum= jedisCluster.del(key);
-		}catch (Exception e) {
-			logger.error("Jediscluster opt del error: ", e); 
-			return -1;
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.del(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
+			return 0;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return delnum;
 	}
 	
 	/**
 	 * 自定义模糊匹配获取所有的keys
 	 * @param pattern
-	 * @return TreeSet，这个结构有个好处是是已经排序，可以直接获取第一个元素，默认升序排序
+	 * @return TreeSet，这个结构有个好处是已经排序，可以直接获取第一个元素，默认升序排序
 	 */
 	public TreeSet<String> keys(String pattern){
         TreeSet<String> keys = new TreeSet<String>();
-        for(String k : clusterNodes.keySet()){  
-            JedisPool jp = clusterNodes.get(k);  
-            Jedis connection = jp.getResource();  
-            try {  
-                keys.addAll(connection.keys(pattern));
-                logger.info(" Get keys from"+connection.getClient().getHost() +":"+connection.getClient().getPort());
-            } catch(Exception e){  
-                logger.info(" Getting keys error: ", e);  
-            } finally{  
-                logger.info(" "+connection.getClient().getHost() +":"+connection.getClient().getPort()+" Connection closed.");  
-                connection.close();//用完一定要close这个链接！！！
-            }  
-        }  
-        return keys;  
+        Jedis jedis=null;
+        try {  
+        	jedis=jedisPool.getResource();  //获取jedis连接池
+            keys.addAll(jedis.keys(pattern));
+            return keys;
+        } catch(Exception ex){  
+            logger.info("Getting keys error: "+ex.getMessage());  
+            return null;
+        } finally{   
+        	if(jedis!=null)jedis.close();//归还资源  
+       }  
     }  
 	/*通用key操作结束*/
 	
-	/*单值操作，可以是String，Float*/
+	/*String操作*/
 	/**
-	 * 添加value值
+	 * 添加string value值
 	 * @param key
 	 * @param value
-	 * @return 
 	 */
-	public String set(String key, String value){
-		String setres=null;
+	public void set(String key, String value){
+		Jedis jedis=null;
 		try{
-			setres=jedisCluster.set(key, value);
-		}catch(Exception e){
-			logger.error("Jediscluster opt set error: ", e);
-			return null;
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			jedis.set(key, value);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return setres;
 	}
 	
 	/**
-	 * 返回value值
+	 * 返回string value值
 	 * @param key
 	 * @return
 	 */
 	public String get(String key){
-		String getstr=null;
+		Jedis jedis=null;
 		try{
-			getstr= jedisCluster.get(key);
-		}catch(Exception e){
-			logger.error("Jediscluster opt get error: ", e);
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.get(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return null;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return getstr;
 	}
 	
 	/**
@@ -174,31 +159,16 @@ public class RedisServer {
 	 * @return 返回最新的自增值
 	 */
 	public long incr(String key){
-		long incr1=0;
+		Jedis jedis=null;
 		try{
-			incr1= jedisCluster.incr(key);
-		}catch(Exception e){
-			logger.error("Jediscluster opt incr error: ", e);
-			return -1;
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.incr(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
+			return 0;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return incr1;
-	}
-	
-	/**
-	 * 对键值进行自增浮点数计数，将指定主键key的value值加上浮点数，如果key本身不存在，会新增0并加上value
-	 * @param key
-	 * @param 
-	 * @return 返回最新的自增值
-	 */
-	public Double incrbyfloat(String key,double value){
-		double incrdoub=0.0;
-		try{
-			incrdoub=jedisCluster.incrByFloat(key, value);
-		}catch(Exception e){
-			logger.error("Jediscluster opt incrbyfloat error: ", e);
-			return -1.0;
-		}
-		return incrdoub;
 	}
 	/*String操作结束*/
 	
@@ -207,34 +177,34 @@ public class RedisServer {
 	 * 从list左边插入数值，如果key值不存在，会自动创建并添加元素
 	 * @param key
 	 * @param value
-	 * @return 返回插入后的元素个数
 	 */
-	public long lpush(String key,String value){
-		long listnum=0;
+	public void lpush(String key,String value){
+		Jedis jedis=null;
 		try{
-			listnum=jedisCluster.lpush(key, value);
-		}catch(Exception e){
-			logger.error("Jediscluster opt lpush error: ", e);
-			return -1;
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			jedis.lpush(key, value);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return listnum;
 	}
 	
 	/**
 	 * 从list右边插入数据，如果key值不存在，会自动创建并添加元素
 	 * @param key
 	 * @param value
-	 * @return 返回插入后的元素个数
 	 */
-	public long rpush(String key,String value){
-		long listnum=0;
+	public void rpush(String key,String value){
+		Jedis jedis=null;
 		try{
-			listnum=jedisCluster.rpush(key, value);
-		}catch(Exception e){
-			logger.error("Jediscluster opt rpush error: ", e);
-			return -1;
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			jedis.rpush(key, value);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return listnum;
 	}
 	
 	/**
@@ -244,14 +214,16 @@ public class RedisServer {
 	 * @return 弹出的值，key不存在返回null
 	 */
 	public String lpop(String key){
-		String popelement=null;
+		Jedis jedis=null;
 		try{
-			popelement= jedisCluster.lpop(key);
-		}catch(Exception e){
-			logger.error("Jediscluster opt lpop error: ", e);
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.lpop(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return null;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return popelement;	
 	}
 	
 	/**
@@ -261,14 +233,16 @@ public class RedisServer {
 	 * @return 弹出的值，key不存在返回null
 	 */
 	public String rpop(String key){
-		String popelement=null;
+		Jedis jedis=null;
 		try{
-			popelement=  jedisCluster.rpop(key);
-		}catch(Exception e){
-			logger.error("Jediscluster opt rpop error: ", e);
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.rpop(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return null;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return popelement;
 	}
 	
 	/**
@@ -276,17 +250,19 @@ public class RedisServer {
 	 * @param key
 	 * @param start 起始位置，从0开始
 	 * @param end -1代表数组最末位置，否则表示结束位置，从0开始计算
-	 * @return 区间结果集合
+	 * @return
 	 */
 	public List<String> lrange(String key,long start, long end){
-		List<String> rangres=null;
+		Jedis jedis=null;
 		try{
-			rangres=jedisCluster.lrange(key, start, end);
-		}catch(Exception e){
-			logger.error("Jediscluster opt lrange error: ", e);
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.lrange(key, start, end);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return null;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return rangres;
 	}
 	
 	/*list操作封装结束*/
@@ -296,52 +272,55 @@ public class RedisServer {
 	 * 添加set元素操作
 	 * @param key
 	 * @param value
-	 * @return 1添加成功，0已经存在，-1存在错误
 	 */
-	public long sadd(String key, String value){
-		long res=0;
+	public void sadd(String key, String value){
+		Jedis jedis=null;
 		try{
-			res=jedisCluster.sadd(key,value);
-		}catch(Exception e){
-			logger.error("Jediscluster opt sadd error: ", e);
-			return -1;
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			jedis.sadd(key,value);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return res;
 	}
 	
 	/**
-	 * 获取set元素数量
+	 * 检查集合元素数量
+	 * @param key 集合的key值
+	 * @return 集合的元素总数
+	 */
+	public Long scard(String key){
+		Long res=new Long(0);
+		Jedis jedis=null;
+		try{
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.scard(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
+			return res;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
+		}
+	}
+	
+	/**
+	 * 获取集合中的全部元素
 	 * @param key
-	 * @return 元素数量 -1表示出错
-	 */
-	public long scard(String key){
-		long res=0;
-		try{
-			res=jedisCluster.scard(key);
-		}catch(Exception e){
-			logger.error("Jediscluster opt scard error: ", e);
-			return -1;
-		}
-		return res;
-	}
-	
-	/**
-	 * 获取set的全部元素值集合
-	 * @param key set的key
-	 * @return 返回Set<String>集合
+	 * @return
 	 */
 	public Set<String> smembers(String key){
-		Set<String> res=null;
+		Jedis jedis=null;
 		try{
-			res=jedisCluster.smembers(key);
-		}catch(Exception e){
-			logger.error("Jediscluster opt smembers error: ", e);
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.smembers(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return null;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return res;
-		
 	}
-	
 	/*set集合操作封装结束*/
 	
 	/*hash散列操作封装*/
@@ -353,14 +332,16 @@ public class RedisServer {
 	 */
 	public boolean hexists(String key, String field)
 	{
-		boolean res=false;
+		Jedis jedis=null;
 		try{
-			res=jedisCluster.hexists(key, field);
-		}catch(Exception e){
-			logger.error("Jediscluster opt hexists error: ", e);
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.hexists(key, field);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return false;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return res;
 	}
 	
 	/**
@@ -370,104 +351,92 @@ public class RedisServer {
 	 * @param field
 	 * @param value
 	 */
-	public long hset(String key, String field, String value)
+	public void hset(String key, String field, String value)
 	{
-		long res=0;
+		Jedis jedis=null;
 		try{
-			res=jedisCluster.hset(key, field, value);
-		}catch(Exception e){
-			logger.error("Jediscluster opt hset error: ", e);
-			return -1;
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			jedis.hset(key, field, value);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return res;
 	}
 	
 	/**
 	 * 设置哈希表中的字段及对应的值
 	 * @param key
 	 * @param field_value,哈希键值数组
-	 * @return res 返回结果OK或者意外情况Exception
 	 */
-	public String hmset(String key, Map<String, String> field_value)
+	public void hmset(String key, Map<String, String> field_value)
 	{
-		String res = null;
+		Jedis jedis=null;
 		try{
-			res = jedisCluster.hmset(key, field_value);
-		}catch(Exception e){
-			logger.error("Jediscluster opt hmset error: ", e);
-			return null;
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			jedis.hmset(key, field_value);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return res;
 	}
 	
 	/**
 	 * 获取哈希表中域的值
 	 * @param key
 	 * @param field
-	 * @return 如果key或者field不存在，结果返回为nil字符串，出错返回null
+	 * @return 如果key或者field不存在，结果返回为null
 	 */
 	public String hget(String key, String field)
 	{
-		String res = null;
+		Jedis jedis=null;
 		try{
-			res=jedisCluster.hget(key, field);
-		}catch(Exception e){
-			logger.error("Jediscluster opt hget error: ", e);
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.hget(key, field);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return null;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return res;
 	}
 	
 	/**
 	 * 获取hash key对应的所有feild和value对
 	 * @param key
-	 * @return res 返回所有的内容
+	 * @return
 	 */
 	public Map<String, String> hgetall(String key)
 	{
-		Map<String, String> res =null;
+		Jedis jedis=null;
 		try{
-			res =jedisCluster.hgetAll(key);
-		}catch(Exception e){
-			logger.error("Jediscluster opt hgetall error: ", e);
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.hgetAll(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return null;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return res;
 	}
 	
 	/**
-	 * 获取hash中key下对应的所有域fields
+	 * 返回hash key中对应的全部fields名称
 	 * @param key
-	 * @return res 所有fields
+	 * @return
 	 */
-	public Set<String> hkeys(String key)
-	{
-		Set<String> res =null;
+	public Set<String> hkeys(String key){
+		Jedis jedis=null;
 		try{
-			res = jedisCluster.hkeys(key);
-		}catch(Exception e){
-			logger.error("Jediscluster opt hkeys error: ", e);
+			jedis=jedisPool.getResource();
+			return jedis.hkeys(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return null;
+		}finally {
+			if(jedis!=null)jedis.close();
 		}
-		return res;
-	}
-	
-	/**
-	 * 删除hash中key对应的field
-	 * @param key
-	 * @param field
-	 * @return res 删除成功1，无删除0，出错-1
-	 */
-	public long hdel(String key, String field)
-	{
-		long res=0;
-		try{
-			res=jedisCluster.hdel(key, field);
-		}catch(Exception e){
-			logger.error("Jediscluster opt hdel error: ", e);
-			return -1;
-		}
-		return res;
 	}
 	/*hash散列操作封装结束*/
 	
@@ -479,35 +448,39 @@ public class RedisServer {
 	 */
 	public List<String> redis_sort1(String key)
 	{
-		List<String> res=null;
+		Jedis jedis=null;
 		try{
-			res= jedisCluster.sort(key);
-		}catch(Exception e){
-			logger.error("Jediscluster opt redis_sort1 error: ", e);
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.sort(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return null;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return res;
 	}
 	
 	/**
-	 * 对redis中的list，set，order set对应的key值进行排序
+	 * 对redis中的list，set，order set对应的key值进行排序，jedis支持by 与 get
 	 * @param key
 	 * @param sortingParameters
 	 * @return list, set, order set中的排序结果
 	 */
 	public List<String> redis_sort2(String key, SortingParams sortingParameters)
 	{
-		List<String> res=null;
+		Jedis jedis=null;
 		try{
-			res= jedisCluster.sort(key, sortingParameters);
-		}catch(Exception e){
-			logger.error("Jediscluster opt redis_sort1 error: ", e);
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.sort(key, sortingParameters);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
 			return null;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
 		}
-		return res;
 	}
 	/*排序操作封装结束*/
 	
-	/*redis cluster不支持事务操作*/
 }
+
 
