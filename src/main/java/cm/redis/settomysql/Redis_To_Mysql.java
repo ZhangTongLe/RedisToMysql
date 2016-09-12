@@ -150,7 +150,7 @@ public class Redis_To_Mysql {
 					}
 					fwflow.close();
 					fwtag.close();
-					logger.info(" Complete get hotspot clock info, get "+numflow+"flow records and "+numtag+" tag records");
+					logger.info(" Complete get hotspot clock info, get "+numflow+" flow records and "+numtag+" tag records");
 					Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
 					conn=DriverManager.getConnection(url);
 					stmt =conn.createStatement();
