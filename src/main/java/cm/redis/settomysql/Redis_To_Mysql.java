@@ -26,8 +26,11 @@ public class Redis_To_Mysql {
 	public static Logger logger=Logger.getLogger(Redis_To_Mysql.class);
 	
 	/**
-	 * 抓取每15分钟的热点区域人流量，4Ghttp流量使用量数据，推送到mysql的dtdb数据库的tb_mofang_hotspot_flow_today表格中
+	 * 抓取每15分钟的热点区域对应的人流量，4Ghttp流量使用量数据，推送到mysql的dtdb数据库的tb_mofang_hotspot_flow_today表格中
 	 * 表格tb_mofang_hotspot_flow_today，字段data_time，id，day，hour，minute，people_cnt，net_flow
+	 * 
+	 * 抓取每15分钟的热点区域标签对应的人流量，4Ghttp流量使用量数据，推送到mysql的dtdb数据库的tb_mofang_hotspot_flow_today_tag表格中
+	 * 表格tb_mofang_hotspot_flow_today_tag，字段data_time，id，day，hour，minute，people_cnt，tag
 	 */
 	public static void PersisHotspotClockInfo()
 	{
@@ -37,9 +40,8 @@ public class Redis_To_Mysql {
 		Iterator<String> keylist =null;
 		String[] keysplit=null;
 		String key=null;
+		String key_count=null;
 		String cdate=null;
-		
-		int num=0;//统计记录
 		
 		//推送的字段组合
 		String data_time=null;
@@ -47,16 +49,25 @@ public class Redis_To_Mysql {
 		String day=null;
 		String hour=null;
 		String minute=null;
+		String tag=null;
 		long pcnt=0;
+		long pcnt_count=0;
 		String people_cnt=null;
 		double dnflow=0.0;
+		double dnflow_count=0.0;
 		long lnflow=0;
 		String net_flow=null;
 		
 		//形成数据文件参数
-		String filepath=null;
-		File file = null;
-		FileWriter fw=null;
+		String fileflowpath=null;
+		String filetagpath=null;
+		File fileflow = null;
+		File filetag=null;
+		FileWriter fwflow=null;
+		FileWriter fwtag=null;
+		
+		int numflow=0;//统计记录
+		int numtag=0;
 		
 		//数据库操作相关参数
 		Connection conn=null;
@@ -69,55 +80,97 @@ public class Redis_To_Mysql {
 		try{
 			//获取实例
 			redisserver=RedisServer.getInstance();					
-			cdate=TimeFormatter.getDate2();        							//获取当前日期YYYY-MM-DD
-			keys=redisserver.keys("mfg4_"+cdate+"_hspset_*"); 			//获取当前日期YYYY-MM-DD对应所有imsi信息的keys
-			num=0;//统计记录
+			cdate=TimeFormatter.getDate2();        								//获取当前日期YYYY-MM-DD
+			keys=redisserver.keys("mfg4_"+cdate+"_hspset_*"); 			//获取当前日期YYYY-MM-DD对应所有imsi信息的keys，已经排好序
 			if(keys!=null&&keys.size()>0)
 			{
 				day=TimeFormatter.getDate(); 				//当天日期 YYYYMMDD，删除mysql对应的当天记录
 				data_time=TimeFormatter.getNow(); 		//获取当前时间YYYY-MM-DD HH:mm:ss
-				filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_flow_today.txt";
-				file = new File(filepath);
-				if (!file.isDirectory()) { 
-					fw=new FileWriter(file);
-					fw.write("");
+				
+				fileflowpath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_flow_today.txt";
+				fileflow = new File(fileflowpath);
+				
+				filetagpath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_flow_today_tag.txt";
+				filetag = new File(filetagpath);
+				
+				if (fileflow.exists()==true && fileflow.isDirectory()==false 
+				&&filetag.exists()==true && filetag.isDirectory()==false	) { 
+					fwflow=new FileWriter(fileflow);
+					fwflow.write("");
+					fwtag=new FileWriter(filetag);
+					fwtag.write("");
+					
 					keylist = keys.iterator();
+					key_count=null;
+					dnflow_count=0.0;
+					pcnt_count=0;
 					while(keylist.hasNext())
 					{
 						key=keylist.next().toString();
 						keysplit=key.split("_");
-						if(keysplit.length==6)
+						if(keysplit.length==7)
 						{
-							id=keysplit[5];  						//hotspotid
+							tag=keysplit[6];							//tagid
+							id=keysplit[5];  							//hotspotid
 							hour=keysplit[3]; 						//hour
 							minute=keysplit[4]; 					//minute
+							
+							key="mfg4_"+cdate+"_hspset_"+hour+"_"+minute+"_"+id+"_"+tag;
 							pcnt=redisserver.scard(key);
 							if(pcnt<0)pcnt=0;
-							people_cnt=String.valueOf(pcnt); //people_cnt
-							key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id;
+							
+							key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id+"_"+tag;
 							net_flow=redisserver.get(key);
 							if(net_flow!=null)dnflow=Double.valueOf(net_flow);
+							else dnflow=0.0;
+							
+							key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id;
+							if(key_count==null||key_count.equals(key)){
+								key_count=key;
+								dnflow_count+=dnflow;
+								pcnt_count+=pcnt;
+							}else{
+								key_count=key;
+								people_cnt=String.valueOf(pcnt_count); 	//people_cnt = pcnt_count
+								lnflow=(long)dnflow_count;
+								net_flow=String.valueOf(lnflow);  			//net_flow  from dnflow_count
+								dnflow_count=dnflow;
+								pcnt_count=pcnt;
+								key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','"+net_flow+"'\n";
+								fwflow.write(key);
+								numflow=numflow+1;
+							}
+							people_cnt=String.valueOf(pcnt); 	//people_cnt = pcnt
 							lnflow=(long)dnflow;
-							net_flow=String.valueOf(lnflow);  //net_flow
-							key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','"+lnflow+"'\n";
-							fw.write(key);
-							num=num+1;
+							net_flow=String.valueOf(lnflow);  	//net_flow from dnflow
+							key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','"+tag+"'\n";
+							fwtag.write(key);
+							numtag=numtag+1;
 						}
 					}
-					fw.close();
-					logger.info(" Complete get hotspot clock info, get "+num+" records");
-					if(num>0)//有数据存在才考虑进行数据库录入
+					fwflow.close();
+					fwtag.close();
+					logger.info(" Complete get hotspot clock info, get "+numflow+"flow records and "+numtag+" tag records");
+					Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
+					conn=DriverManager.getConnection(url);
+					stmt =conn.createStatement();
+					if(numflow>0)	//有数据存在才考虑进行数据库录入
 					{
-						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
-						conn=DriverManager.getConnection(url);
-						stmt =conn.createStatement();
 						sql="delete from tb_mofang_hotspot_flow_today where day='"+day+"'";
 						stmt.execute(sql);
-						sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
+						sql="load data local infile '"+fileflowpath+"' replace into table tb_mofang_hotspot_flow_today fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
 						stmt.execute(sql);
-						conn.close();	
-						logger.info(" Set hotspots clock info  into mysql ok");
+						logger.info(" Set hotspots flow clock info  into mysql ok");
 					}
+					if(numtag>0)	//有数据存在才考虑进行数据库录入
+					{
+						sql="delete from tb_mofang_hotspot_flow_today_tag where day='"+day+"'";
+						stmt.execute(sql);
+						sql="load data local infile '"+filetagpath+"' replace into table tb_mofang_hotspot_flow_today_tag fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
+						stmt.execute(sql);
+						logger.info(" Set hotspots tag clock info  into mysql ok");
+					}
+					conn.close();
 			    }
 			}else{
 				logger.info(" Can't get redis hotspot clock info keys.");	
@@ -132,21 +185,29 @@ public class Redis_To_Mysql {
 		keylist=null;
 		keysplit=null;
 		key=null;
+		key_count=null;
 		cdate=null;
 		data_time=null;
 		id=null;
 		day=null;
 		hour=null;
 		minute=null;
+		tag=null;
 		pcnt=0;
+		pcnt_count=0;
 		people_cnt=null;
 		dnflow=0.0;
+		dnflow_count=0.0;
 		lnflow=0;
-		num=0;
+		numflow=0;//统计记录
+		numtag=0;
 		net_flow=null;
-		filepath=null;
-		file=null;
-		fw=null;
+		fileflowpath=null;
+		filetagpath=null;
+		fileflow = null;
+		filetag=null;
+		fwflow=null;
+		fwtag=null;
 		
 		conn=null;
 		sql=null;
@@ -254,122 +315,6 @@ public class Redis_To_Mysql {
 		conn=null;
 		sql=null;
 		stmt=null;
-	}
-	
-	/**
-	 * 统计标签对应的全天人流量，4Ghttp流量
-	 * 表格，字段data_time，tag，people_cnt，net_flow
-	 */
-	public static void PersisTagsInfo()
-	{
-		//从redis获取对应key集合相关参数
-		RedisServer redisserver=null;
-		TreeSet<String> keys=null; 
-		Iterator<String> keylist =null;
-		String key=null;
-		String cdate=null;
-		
-		int num=0;//统计记录
-		
-		//推送的字段组合
-		String data_time=null;
-		String tagid=null;
-		long pcnt=0;
-		String people_cnt=null;
-		double dnflow=0.0;
-		long lnflow=0;
-		String net_flow=null;
-		
-		//形成数据文件参数
-		String filepath=null;
-		File file = null;
-		FileWriter fw=null;
-		
-		//数据库操作相关参数
-//		Connection conn=null;
-//		String sql=null;
-//		String url=ResourcesConfig.MYSQL_SERVER_URL+"?user="+ ResourcesConfig.MYSQL_USER
-//				+"&password="+ResourcesConfig.MYSQL_PASSWD+"&characterEncoding=UTF8";
-//		Statement stmt=null;
-
-		logger.info(" Start to get Tag info redis-keys");
-		try{
-			//获取实例
-			redisserver=RedisServer.getInstance();					
-			cdate=TimeFormatter.getDate2();        							//获取当前日期YYYY-MM-DD
-			keys=redisserver.keys("mfg4_"+cdate+"_tagset_*"); 			//获取当前日期YYYY-MM-DD对应所有imsi信息的keys
-			num=0;//统计记录
-			if(keys!=null&&keys.size()>0)
-			{
-				data_time=TimeFormatter.getNow(); 		//获取当前时间YYYY-MM-DD HH:mm:ss
-				filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_tags_info_today.txt";
-				file = new File(filepath);
-				if (!file.isDirectory()) { 
-					fw=new FileWriter(file);
-					fw.write("");
-					keylist = keys.iterator();
-					while(keylist.hasNext())
-					{
-						key=keylist.next().toString();
-						if(key.length()>23)
-						{
-							tagid=key.substring(23);  						//tagid
-							pcnt=redisserver.scard(key);
-							if(pcnt<0)pcnt=0;
-							people_cnt=String.valueOf(pcnt); 			//people_cnt
-							key="mfg4_"+cdate+"_tagflux_"+tagid;
-							net_flow=redisserver.get(key);
-							if(net_flow!=null)dnflow=Double.valueOf(net_flow);
-							lnflow=(long)dnflow;
-							net_flow=String.valueOf(lnflow);  			//net_flow
-							key="'"+data_time+"','"+tagid+"','"+people_cnt+"','"+lnflow+"'\n";
-							fw.write(key);
-							num=num+1;
-						}
-					}
-					fw.close();
-					logger.info(" Complete get Tag info, get "+num+" records");
-//					if(num>0)//有数据存在才考虑进行数据库录入
-//					{
-//						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
-//						conn=DriverManager.getConnection(url);
-//						stmt =conn.createStatement();
-//						sql="delete from tb_mofang_tags_info_today";
-//						stmt.execute(sql);
-//						sql="load data local infile '"+filepath+"' replace into table tb_mofang_tags_info_today fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
-//						stmt.execute(sql);
-//						conn.close();	
-//						logger.info(" Set hotspots Tag info into mysql ok");
-//					}
-			    }
-			}else{
-				logger.info(" Can't get redis Tag info keys.");	
-			}
-		} catch (Exception e) {
-			logger.info(" Thread Flush_Redis_DB Pushing Tag info to Mysql crashes: "+e.getMessage());
-		}
-		
-		//释放内存
-		redisserver=null;
-		keys=null;
-		keylist=null;
-		key=null;
-		cdate=null;
-		data_time=null;
-		tagid=null;
-		pcnt=0;
-		people_cnt=null;
-		dnflow=0.0;
-		lnflow=0;
-		num=0;
-		net_flow=null;
-		filepath=null;
-		file=null;
-		fw=null;
-		
-//		conn=null;
-//		sql=null;
-//		stmt=null;
 	}
 	
 	/**
@@ -519,11 +464,10 @@ public class Redis_To_Mysql {
 		while(true)
 		{
 			try {
-				Redis_To_Mysql.PersisHotspotClockInfo();  //推送每15分钟的热点区域人流量，4Ghttp流量使用量数据,ok
-				Redis_To_Mysql.PersisHotspotImsiSet();    //推送当天热点区域的imsi数据明细，ok
-				Redis_To_Mysql.PersisTagsInfo();   			  //推送当天热点区域中标签的累计人流量，4Ghttp流量使用量数据
-				Redis_To_Mysql.PersisHeatMapClockInfo(); //推送每5分钟的热力图人流量信息,ok
-				Thread.sleep(1000*60*5);
+				Redis_To_Mysql.PersisHotspotClockInfo();   		//推送每15分钟的热点区域人流量，4Ghttp流量使用量数据；推送每15分钟的热点区域标签对应的人流量，4Ghttp流量使用量数据,ok
+				Redis_To_Mysql.PersisHotspotImsiSet();      		//推送当天热点区域的imsi数据明细，ok
+				Redis_To_Mysql.PersisHeatMapClockInfo();  		//推送每15分钟的热力图人流量信息，ok
+				Thread.sleep(1000*60*15);
 			} catch (InterruptedException e) {
 				logger.info(" Thread Flush_Redis_DB crashes: "+e.getMessage());
 			}
