@@ -124,7 +124,7 @@ public class Redis_To_Mysql {
 							if(net_flow!=null)dnflow=Double.valueOf(net_flow);
 							else dnflow=0.0;
 							
-							key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id;
+							key="mfg4_"+cdate+"_hspset_"+hour+"_"+minute+"_"+id;
 							if(key_count==null||key_count.equals(key)){
 								key_count=key;
 								dnflow_count+=dnflow;
