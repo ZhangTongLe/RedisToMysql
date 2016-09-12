@@ -40,7 +40,6 @@ public class Redis_To_Mysql {
 		Iterator<String> keylist =null;
 		String[] keysplit=null;
 		String key=null;
-		String key_count=null;
 		String cdate=null;
 		
 		//推送的字段组合
@@ -51,10 +50,8 @@ public class Redis_To_Mysql {
 		String minute=null;
 		String tag=null;
 		long pcnt=0;
-		long pcnt_count=0;
 		String people_cnt=null;
 		double dnflow=0.0;
-		double dnflow_count=0.0;
 		long lnflow=0;
 		String net_flow=null;
 		
@@ -101,51 +98,57 @@ public class Redis_To_Mysql {
 					fwtag.write("");
 					
 					keylist = keys.iterator();
-					key_count=null;
-					dnflow_count=0.0;
-					pcnt_count=0;
 					while(keylist.hasNext())
 					{
 						key=keylist.next().toString();
 						keysplit=key.split("_");
-						if(keysplit.length==7)
+						if(keysplit.length>=6)
 						{
-							tag=keysplit[6];							//tagid
 							id=keysplit[5];  							//hotspotid
 							hour=keysplit[3]; 						//hour
 							minute=keysplit[4]; 					//minute
 							
-							key="mfg4_"+cdate+"_hspset_"+hour+"_"+minute+"_"+id+"_"+tag;
-							pcnt=redisserver.scard(key);
-							if(pcnt<0)pcnt=0;
-							
-							key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id+"_"+tag;
-							net_flow=redisserver.get(key);
-							if(net_flow!=null)dnflow=Double.valueOf(net_flow);
-							else dnflow=0.0;
-							
-							key="mfg4_"+cdate+"_hspset_"+hour+"_"+minute+"_"+id;
-							if(key_count==null||key_count.equals(key)){
-								key_count=key;
-								dnflow_count+=dnflow;
-								pcnt_count+=pcnt;
-							}else{
-								key_count=key;
-								people_cnt=String.valueOf(pcnt_count); 	//people_cnt = pcnt_count
-								lnflow=(long)dnflow_count;
-								net_flow=String.valueOf(lnflow);  			//net_flow  from dnflow_count
-								dnflow_count=dnflow;
-								pcnt_count=pcnt;
+							if(keysplit.length==6){
+								key="mfg4_"+cdate+"_hspset_"+hour+"_"+minute+"_"+id;
+								pcnt=redisserver.scard(key);
+								if(pcnt<0)pcnt=0;
+								
+								key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id;
+								net_flow=redisserver.get(key);
+								if(net_flow!=null)dnflow=Double.valueOf(net_flow);
+								else dnflow=0.0;
+								lnflow=(long)dnflow;
+								
+								people_cnt=String.valueOf(pcnt); 	//people_cnt = pcnt
+								lnflow=(long)dnflow;
+								net_flow=String.valueOf(lnflow);  	//net_flow from dnflow
+								
 								key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','"+net_flow+"'\n";
 								fwflow.write(key);
 								numflow=numflow+1;
 							}
-							people_cnt=String.valueOf(pcnt); 	//people_cnt = pcnt
-							lnflow=(long)dnflow;
-							net_flow=String.valueOf(lnflow);  	//net_flow from dnflow
-							key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','"+tag+"'\n";
-							fwtag.write(key);
-							numtag=numtag+1;
+							
+							if(keysplit.length==7){
+								tag=keysplit[6];						//tagid
+								
+								key="mfg4_"+cdate+"_hspset_"+hour+"_"+minute+"_"+id+"_"+tag;
+								pcnt=redisserver.scard(key);
+								if(pcnt<0)pcnt=0;
+								
+								key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id+"_"+tag;
+								net_flow=redisserver.get(key);
+								if(net_flow!=null)dnflow=Double.valueOf(net_flow);
+								else dnflow=0.0;
+								lnflow=(long)dnflow;
+								
+								people_cnt=String.valueOf(pcnt); 	//people_cnt = pcnt
+								lnflow=(long)dnflow;
+								net_flow=String.valueOf(lnflow);  	//net_flow from dnflow
+								
+								key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','"+tag+"'\n";
+								fwtag.write(key);
+								numtag=numtag+1;
+							}
 						}
 					}
 					fwflow.close();
@@ -185,7 +188,6 @@ public class Redis_To_Mysql {
 		keylist=null;
 		keysplit=null;
 		key=null;
-		key_count=null;
 		cdate=null;
 		data_time=null;
 		id=null;
@@ -194,10 +196,8 @@ public class Redis_To_Mysql {
 		minute=null;
 		tag=null;
 		pcnt=0;
-		pcnt_count=0;
 		people_cnt=null;
 		dnflow=0.0;
-		dnflow_count=0.0;
 		lnflow=0;
 		numflow=0;//统计记录
 		numtag=0;
