@@ -318,7 +318,7 @@ public class Redis_To_Mysql {
 	}
 	
 	/**
-	 * 抓取每5分钟的热点区域人流量，【4Ghttp流量使用量数据，表中无数据】，推送到mysql的dtdb数据库的tb_mofang_heatmap_ref表格中
+	 * 抓取每15分钟的热点区域人流量，【4Ghttp流量使用量数据，表中无数据】，推送到mysql的dtdb数据库的tb_mofang_heatmap_ref表格中
 	 * 表格tb_mofang_heatmap_ref，字段data_time，tac，ci，cnt
 	 */
 	public static void PersisHeatMapClockInfo()
@@ -453,8 +453,7 @@ public class Redis_To_Mysql {
 		sql=null;
 		stmt=null;
 	}
-		
-	
+
 	/**
 	 * 主函数
 	 * @param args
