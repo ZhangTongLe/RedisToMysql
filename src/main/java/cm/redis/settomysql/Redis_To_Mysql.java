@@ -29,7 +29,7 @@ public class Redis_To_Mysql {
 	 * 抓取每15分钟的热点区域对应的人流量，4Ghttp流量使用量数据，推送到mysql的dtdb数据库的tb_mofang_hotspot_flow_today表格中
 	 * 表格tb_mofang_hotspot_flow_today，字段data_time，id，day，hour，minute，people_cnt，net_flow
 	 * 
-	 * 抓取每15分钟的热点区域标签对应的人流量，4Ghttp流量使用量数据，推送到mysql的dtdb数据库的tb_mofang_hotspot_flow_today_tag表格中
+	 * 抓取每15分钟的热点区域标签对应的人流量，推送到mysql的dtdb数据库的tb_mofang_hotspot_flow_today_tag表格中
 	 * 表格tb_mofang_hotspot_flow_today_tag，字段data_time，id，day，hour，minute，people_cnt，tag
 	 */
 	public static void PersisHotspotClockInfo()
@@ -79,6 +79,10 @@ public class Redis_To_Mysql {
 			redisserver=RedisServer.getInstance();					
 			cdate=TimeFormatter.getDate2();        								//获取当前日期YYYY-MM-DD
 			keys=redisserver.keys("mfg4_"+cdate+"_hspset_*"); 			//获取当前日期YYYY-MM-DD对应所有imsi信息的keys，已经排好序
+			if(keys==null||keys.size()==0){
+				cdate=TimeFormatter.getYestoday2();
+				keys=redisserver.keys("mfg4_"+cdate+"_hspset_*");
+			}
 			if(keys!=null&&keys.size()>0)
 			{
 				day=TimeFormatter.getDate(); 				//当天日期 YYYYMMDD，删除mysql对应的当天记录
@@ -135,15 +139,15 @@ public class Redis_To_Mysql {
 								pcnt=redisserver.scard(key);
 								if(pcnt<0)pcnt=0;
 								
-								key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id+"_"+tag;
-								net_flow=redisserver.get(key);
-								if(net_flow!=null)dnflow=Double.valueOf(net_flow);
-								else dnflow=0.0;
-								lnflow=(long)dnflow;
+//								key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id+"_"+tag;
+//								net_flow=redisserver.get(key);
+//								if(net_flow!=null)dnflow=Double.valueOf(net_flow);
+//								else dnflow=0.0;
+//								lnflow=(long)dnflow;
 								
 								people_cnt=String.valueOf(pcnt); 	//people_cnt = pcnt
-								lnflow=(long)dnflow;
-								net_flow=String.valueOf(lnflow);  	//net_flow from dnflow
+//								lnflow=(long)dnflow;
+//								net_flow=String.valueOf(lnflow);  	//net_flow from dnflow
 								
 								key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','"+tag+"'\n";
 								fwtag.write(key);
@@ -253,6 +257,10 @@ public class Redis_To_Mysql {
 			cdate=TimeFormatter.getDate2();        							//获取当前日期YYYY-MM-DD
 			keys=redisserver.keys("mfg4_"+cdate+"_hspdayset_*"); 		//获取当前日期YYYY-MM-DD累计的imsi信息的keys
 			num=0;//统计记录
+			if(keys==null||keys.size()==0){
+				cdate=TimeFormatter.getYestoday2();
+				keys=redisserver.keys("mfg4_"+cdate+"_hspdayset_*");
+			}
 			if(keys!=null&&keys.size()>0)
 			{
 				data_time=TimeFormatter.getNow(); 							//获取当前时间YYYY-MM-DD HH:mm:ss
@@ -318,6 +326,186 @@ public class Redis_To_Mysql {
 	}
 	
 	/**
+	 * 抓取热点区域上网标签对应的累计人流量，4Ghttp流量使用量数据，推送到mysql的dtdb数据库的tb_mofang_hotspot_cust_tag表格中
+	 * 表格tb_mofang_hotspot_cust_tag，字段data_time，id，tag，k，v，tag=webtagpeople，webtagflux (mb)
+	 */
+	public static void PersisHotspotWebClockInfo()
+	{
+		//从redis获取对应key集合相关参数
+		RedisServer redisserver=null;
+		TreeSet<String> keys=null; 
+		Iterator<String> keylist =null;
+		String[] keysplit=null;
+		String key=null;
+		String cdate=null;
+		
+		int num=0;//统计记录
+		
+		//推送的字段组合
+		String data_time=null;
+		String id=null;
+		String tag=null;
+		String k=null;
+		String kchn=null;
+		String v=null;
+		long pcnt=0;
+		double dnflow=0.0;
+		long lnflow=0;
+		
+		//形成数据文件参数
+		String filepath=null;
+		File file = null;
+		FileWriter fw=null;
+		
+		//数据库操作相关参数
+		Connection conn=null;
+		String sql=null;
+		String url=ResourcesConfig.MYSQL_SERVER_URL+"?user="+ ResourcesConfig.MYSQL_USER
+				+"&password="+ResourcesConfig.MYSQL_PASSWD+"&characterEncoding=UTF8";
+		Statement stmt=null;
+
+		logger.info(" Start to get hotspot webapp clock info redis-keys");
+		try{
+			//获取实例
+			redisserver=RedisServer.getInstance();					
+			cdate=TimeFormatter.getDate2();        								//获取当前日期YYYY-MM-DD
+			keys=redisserver.keys("mfg4_"+cdate+"_hspwtagset_*"); 		//获取当前日期YYYY-MM-DD对应所有imsi信息的keys
+			num=0;//统计记录
+			if(keys==null||keys.size()==0){
+				cdate=TimeFormatter.getYestoday2();
+				keys=redisserver.keys("mfg4_"+cdate+"_hspwtagset_*");
+			}
+			if(keys!=null&&keys.size()>0)
+			{
+				data_time=TimeFormatter.getNow(); 		//获取当前时间YYYY-MM-DD HH:mm:ss
+				filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_cust_tag.txt";
+				file = new File(filepath);
+				if (!file.isDirectory()) { 
+					fw=new FileWriter(file);
+					fw.write("");
+					keylist = keys.iterator();
+					while(keylist.hasNext())
+					{
+						key=keylist.next().toString();
+						keysplit=key.split("_");
+						if(keysplit.length>=5)
+						{
+							id=keysplit[3];  						//hotspotid
+							k=keysplit[4];							//k
+							if(k.equals("game")){
+								kchn="1_游戏";
+							}else if(k.equals("soccomm")){
+								kchn="2_社交";
+							}else if(k.equals("instmsg")){
+								kchn="3_即时通信";
+							}else if(k.equals("travel")){
+								kchn="4_旅游出行";
+							}else if(k.equals("finance")){
+								kchn="5_金融理财";
+							}else if(k.equals("webbusi")){
+								kchn="6_网络购物";
+							}else if(k.equals("convlife")){
+								kchn="7_便捷生活";
+							}else if(k.equals("newsinfo")){
+								kchn="8_新闻资讯";
+							}else if(k.equals("tools")){
+								kchn="9_工具";
+							}else if(k.equals("read")){
+								kchn="10_阅读";
+							}else if(k.equals("education")){
+								kchn="11_学习教育";
+							}else if(k.equals("audio")){
+								kchn="12_音频";
+							}else if(k.equals("video")){
+								kchn="13_视频";
+							}else if(k.equals("image")){
+								kchn="14_影音图像";
+							}else if(k.equals("appstore")){
+								kchn="15_应用商店";
+							}else if(k.equals("search")){
+								kchn="16_搜索";
+							}else if(k.equals("browser")){
+								kchn="17_浏览器";
+							}else if(k.equals("others")){
+								kchn="18_其他";
+							}else if(k.equals("safety")){
+								kchn="19_安全防护";
+							}else if(k.equals("email")){
+								kchn="20_邮箱";
+							}else if(k.equals("multimsg")){
+								kchn="21_彩信";
+							}
+							
+							tag="webtagpeople";
+
+							key="mfg4_"+cdate+"_hspwebset_"+id+"_"+k;
+							pcnt=redisserver.scard(key);
+							if(pcnt<0)pcnt=0;
+							v=String.valueOf(pcnt); //people_cnt
+							key="'"+data_time+"','"+id+"','"+tag+"','"+kchn+"','"+v+"'\n";
+							fw.write(key);
+							
+							tag="webtagflux";
+							key="mfg4_"+cdate+"_hspwtagflux_"+id+"_"+k;
+							v=redisserver.get(key);
+							if(v!=null)dnflow=Double.valueOf(v);
+							lnflow=(long)dnflow;
+							v=String.valueOf(lnflow);  
+							key="'"+data_time+"','"+id+"','"+tag+"','"+kchn+"','"+v+"'\n";
+							fw.write(key);
+							
+							num=num+1;
+						}
+					}
+					fw.close();
+					logger.info(" Complete get hotspot webapp info, get "+num+" records");
+					if(num>0)//有数据存在才考虑进行数据库录入
+					{
+						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
+						conn=DriverManager.getConnection(url);
+						stmt =conn.createStatement();
+						sql="delete from tb_mofang_hotspot_cust_tag where tag='webtagpeople' or tag='webtagflux'";
+						stmt.execute(sql);
+						sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_cust_tag fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
+						stmt.execute(sql);
+						conn.close();	
+						logger.info(" Set hotspot webapp info into mysql ok");
+					}
+				}
+			}else{
+				logger.info(" Can't get redishotspot webapp info keys.");	
+			}
+		} catch (Exception e) {
+			logger.info(" Thread Flush_Redis_DB Pushing hotspot webapp info to Mysql crashes: "+e.getMessage());
+		}
+		
+		//释放内存
+		redisserver=null;
+		keys=null;
+		keylist=null;
+		keysplit=null;
+		key=null;
+		cdate=null;
+		data_time=null;
+		id=null;
+		tag=null;
+		k=null;
+		kchn=null;
+		v=null;
+		pcnt=0;
+		dnflow=0.0;
+		lnflow=0;
+		num=0;
+		filepath=null;
+		file=null;
+		fw=null;
+		
+		conn=null;
+		sql=null;
+		stmt=null;
+	}
+	
+	/**
 	 * 抓取每15分钟的热点区域人流量，【4Ghttp流量使用量数据，表中无数据】，推送到mysql的dtdb数据库的tb_mofang_heatmap_ref表格中
 	 * 表格tb_mofang_heatmap_ref，字段data_time，tac，ci，cnt
 	 */
@@ -364,14 +552,21 @@ public class Redis_To_Mysql {
 			cdate=TimeFormatter.getDate2();        								//获取当前日期YYYY-MM-DD
 			keys=redisserver.keys("mfg4_"+cdate+"_hmset_*"); 			//获取当前日期YYYY-MM-DD对应所有imsi信息的keys
 			num=0;//统计记录
+			if(keys==null||keys.size()==0){
+				cdate=TimeFormatter.getYestoday2();
+				keys=redisserver.keys("mfg4_"+cdate+"_hmset_*");
+			}
 			if(keys!=null&&keys.size()>0)
 			{
 				key=keys.last();//从默认的升序排序中，拿到当前统计的最新时刻
 				keysplit=key.split("_");
 				hour=keysplit[3];
 				minute=keysplit[4];
-				
 				keys=redisserver.keys(key="mfg4_"+cdate+"_hmset_"+hour+"_"+minute+"_*");
+				if(keys==null||keys.size()==0){
+					cdate=TimeFormatter.getYestoday2();
+					keys=redisserver.keys(key="mfg4_"+cdate+"_hmset_"+hour+"_"+minute+"_*");
+				}
 				if(keys!=null&&keys.size()>0){
 					data_time=TimeFormatter.getNow(); 		//获取当前时间YYYY-MM-DD HH:mm:ss
 					filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_heatmap_ref.txt";
@@ -454,6 +649,7 @@ public class Redis_To_Mysql {
 		stmt=null;
 	}
 
+
 	/**
 	 * 主函数
 	 * @param args
@@ -463,8 +659,9 @@ public class Redis_To_Mysql {
 		while(true)
 		{
 			try {
-				Redis_To_Mysql.PersisHotspotClockInfo();   		//推送每15分钟的热点区域人流量，4Ghttp流量使用量数据；推送每15分钟的热点区域标签对应的人流量，4Ghttp流量使用量数据,ok
+				Redis_To_Mysql.PersisHotspotClockInfo();   		//推送每15分钟的热点区域，热点区域标签对应的人流量，4Ghttp流量使用量数据,ok
 				Redis_To_Mysql.PersisHotspotImsiSet();      		//推送当天热点区域的imsi数据明细，ok
+				Redis_To_Mysql.PersisHotspotWebClockInfo(); //推送当天热点区域对应的上网标签的人数，流量累计值，ok
 				Redis_To_Mysql.PersisHeatMapClockInfo();  		//推送每15分钟的热力图人流量信息，ok
 				Thread.sleep(1000*60*15);
 			} catch (InterruptedException e) {
