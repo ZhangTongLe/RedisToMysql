@@ -283,7 +283,7 @@ public class Redis_To_Mysql {
 							id=key.substring(26); //获取hotspotid
 							imsiset=redisserver.smembers(key);
 							for(String imsi:imsiset){
-								key="mfg4"+cdate+"_"+imsi+"_"+id;
+								key="mfg4_"+cdate+"_"+imsi+"_"+id;
 								firsttime=redisserver.get(key);
 								if(firsttime!=null&&firsttime.length()>=29)
 								{
