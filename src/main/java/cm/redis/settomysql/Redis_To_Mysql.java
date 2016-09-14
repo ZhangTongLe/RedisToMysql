@@ -26,10 +26,10 @@ public class Redis_To_Mysql {
 	public static Logger logger=Logger.getLogger(Redis_To_Mysql.class);
 	
 	/**
-	 * 抓取每15分钟的热点区域对应的人流量，4Ghttp流量使用量数据，推送到mysql的dtdb数据库的tb_mofang_hotspot_flow_today表格中
+	 * 抓取每N分钟的热点区域对应的人流量，4Ghttp流量使用量数据，推送到mysql的dtdb数据库的tb_mofang_hotspot_flow_today表格中
 	 * 表格tb_mofang_hotspot_flow_today，字段data_time，id，day，hour，minute，people_cnt，net_flow
 	 * 
-	 * 抓取每15分钟的热点区域标签对应的人流量，推送到mysql的dtdb数据库的tb_mofang_hotspot_flow_today_tag表格中
+	 * 抓取每N分钟的热点区域标签对应的人流量，推送到mysql的dtdb数据库的tb_mofang_hotspot_flow_today_tag表格中
 	 * 表格tb_mofang_hotspot_flow_today_tag，字段data_time，id，day，hour，minute，people_cnt，tag
 	 */
 	public static void PersisHotspotClockInfo()
@@ -514,7 +514,7 @@ public class Redis_To_Mysql {
 	}
 	
 	/**
-	 * 抓取每15分钟的热点区域人流量，【4Ghttp流量使用量数据，表中无数据】，推送到mysql的dtdb数据库的tb_mofang_heatmap_ref表格中
+	 * 抓取每N分钟的热点区域人流量，【4Ghttp流量使用量数据，表中无数据】，推送到mysql的dtdb数据库的tb_mofang_heatmap_ref表格中
 	 * 表格tb_mofang_heatmap_ref，字段data_time，tac，ci，cnt
 	 */
 	public static void PersisHeatMapClockInfo()
@@ -667,9 +667,9 @@ public class Redis_To_Mysql {
 		while(true)
 		{
 			try {
-				Redis_To_Mysql.PersisHotspotClockInfo();   	//推送每15分钟的热点区域，热点区域标签对应的人流量，4Ghttp流量使用量数据,ok
+				Redis_To_Mysql.PersisHotspotClockInfo();   		//推送每8分钟的热点区域，热点区域标签对应的人流量，4Ghttp流量使用量数据,ok
 				Redis_To_Mysql.PersisHotspotImsiSet();      		//推送当天热点区域的imsi数据明细，ok
-				Redis_To_Mysql.PersisHotspotWebClockInfo(); //推送推送每15分钟的热点区域，上网标签的人数，ok
+				Redis_To_Mysql.PersisHotspotWebClockInfo(); //推送推送每8分钟的热点区域，上网标签的人数，ok
 				Redis_To_Mysql.PersisHeatMapClockInfo();  		//推送每15分钟的热力图人流量信息，ok
 				Thread.sleep(1000*60*8);
 			} catch (InterruptedException e) {
