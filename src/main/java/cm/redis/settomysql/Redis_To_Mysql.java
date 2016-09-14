@@ -412,7 +412,7 @@ public class Redis_To_Mysql {
 							tag=keysplit[6];						//tag
 							key="mfg4_"+cdate+"_hspwtagset_"+hour+"_"+minute+"_"+id+"_"+tag;
 							pcnt=redisserver.scard(key);
-							if(pcnt>0&&(tag.equals("soccomm")||tag.equals("video")||tag.equals("search")||tag.equals("newsinfo"))){
+							if(pcnt>0&&(tag.equals("instmsg")||tag.equals("video")||tag.equals("search")||tag.equals("newsinfo"))){
 								value=String.valueOf(pcnt); //people_cnt
 								if(tag.equals("game")){
 									kchn="游戏"; //1_
