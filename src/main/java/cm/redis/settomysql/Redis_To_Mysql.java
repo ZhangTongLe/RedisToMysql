@@ -471,7 +471,7 @@ public class Redis_To_Mysql {
 						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
 						conn=DriverManager.getConnection(url);
 						stmt =conn.createStatement();
-						sql="delete from tb_mofang_hotspot_flow_today_tag where where (day='"+day+"' and tag not in(\"新生\",\"老生\"))";
+						sql="delete from tb_mofang_hotspot_flow_today_tag where where day='"+day+"' and tag<>\"新生\" and tag<>\"老生\"";
 						stmt.execute(sql);
 						sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today_tag fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
 						stmt.execute(sql);
