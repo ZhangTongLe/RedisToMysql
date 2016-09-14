@@ -139,6 +139,9 @@ public class Redis_To_Mysql {
 								pcnt=redisserver.scard(key);
 								if(pcnt<0)pcnt=0;
 								
+								if(tag.equals("1"))tag="新生";
+								else if(tag.equals("2"))tag="老生";
+								
 //								key="mfg4_"+cdate+"_hspflux_"+hour+"_"+minute+"_"+id+"_"+tag;
 //								net_flow=redisserver.get(key);
 //								if(net_flow!=null)dnflow=Double.valueOf(net_flow);
@@ -148,7 +151,7 @@ public class Redis_To_Mysql {
 								people_cnt=String.valueOf(pcnt); 	//people_cnt = pcnt
 //								lnflow=(long)dnflow;
 //								net_flow=String.valueOf(lnflow);  	//net_flow from dnflow
-								
+
 								key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','"+tag+"'\n";
 								fwtag.write(key);
 								numtag=numtag+1;
@@ -237,6 +240,8 @@ public class Redis_To_Mysql {
 		//推送的字段组合
 		String data_time=null;
 		String id=null;
+		String firsttime=null;
+		String lasttime=null;
 		
 		//形成数据文件参数
 		String filepath=null;
@@ -278,9 +283,16 @@ public class Redis_To_Mysql {
 							id=key.substring(26); //获取hotspotid
 							imsiset=redisserver.smembers(key);
 							for(String imsi:imsiset){
-								key="'"+data_time+"','"+id+"','"+imsi+"'\n";
-								fw.write(key);
-								num=num+1;
+								key="mfg4"+cdate+"_"+imsi+"_"+id;
+								firsttime=redisserver.get(key);
+								if(firsttime!=null&&firsttime.length()>=29)
+								{
+									lasttime=firsttime.substring(15);
+									firsttime=firsttime.substring(0,15);
+									key="'"+data_time+"','"+id+"','"+imsi+"','"+firsttime+"','"+lasttime+"'\n";
+									fw.write(key);
+									num=num+1;
+								}
 							}
 						}
 					}
@@ -315,6 +327,8 @@ public class Redis_To_Mysql {
 		cdate=null;
 		data_time=null;
 		id=null;
+		firsttime=null;
+		lasttime=null;
 		num=0;
 		filepath=null;
 		file=null;
@@ -326,8 +340,9 @@ public class Redis_To_Mysql {
 	}
 	
 	/**
-	 * 抓取热点区域上网标签对应的累计人流量，4Ghttp流量使用量数据，推送到mysql的dtdb数据库的tb_mofang_hotspot_cust_tag表格中
-	 * 表格tb_mofang_hotspot_cust_tag，字段data_time，id，tag，k，v，tag=webtagpeople，webtagflux (mb)
+	 * 抓取热点区域上网标签对应的累计人流量，推送到mysql的dtdb数据库的tb_mofang_hotspot_flow_today_tag表格中
+	 * 表格tb_mofang_hotspot_flow_today_tag，字段data_time，id，day，hour，minute，people_cnt，tag
+	 * 累计表格tb_mofang_hotspot_cust_tag，字段data_time，id，tag，k，v，tag=webtagpeople，webtagflux (mb) 暂未使用
 	 */
 	public static void PersisHotspotWebClockInfo()
 	{
@@ -344,13 +359,13 @@ public class Redis_To_Mysql {
 		//推送的字段组合
 		String data_time=null;
 		String id=null;
+		String day=null;
+		String hour=null;
+		String minute=null;
+		String value=null;
 		String tag=null;
-		String k=null;
 		String kchn=null;
-		String v=null;
 		long pcnt=0;
-		double dnflow=0.0;
-		long lnflow=0;
 		
 		//形成数据文件参数
 		String filepath=null;
@@ -377,8 +392,9 @@ public class Redis_To_Mysql {
 			}
 			if(keys!=null&&keys.size()>0)
 			{
+				day=TimeFormatter.getDate(); 				//当天日期 YYYYMMDD，删除mysql对应的当天记录
 				data_time=TimeFormatter.getNow(); 		//获取当前时间YYYY-MM-DD HH:mm:ss
-				filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_cust_tag.txt";
+				filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_flow_today_tag2.txt";
 				file = new File(filepath);
 				if (!file.isDirectory()) { 
 					fw=new FileWriter(file);
@@ -388,73 +404,64 @@ public class Redis_To_Mysql {
 					{
 						key=keylist.next().toString();
 						keysplit=key.split("_");
-						if(keysplit.length>=5)
+						if(keysplit.length>=7)
 						{
-							id=keysplit[3];  						//hotspotid
-							k=keysplit[4];							//k
-							if(k.equals("game")){
-								kchn="1_游戏";
-							}else if(k.equals("soccomm")){
-								kchn="2_社交";
-							}else if(k.equals("instmsg")){
-								kchn="3_即时通信";
-							}else if(k.equals("travel")){
-								kchn="4_旅游出行";
-							}else if(k.equals("finance")){
-								kchn="5_金融理财";
-							}else if(k.equals("webbusi")){
-								kchn="6_网络购物";
-							}else if(k.equals("convlife")){
-								kchn="7_便捷生活";
-							}else if(k.equals("newsinfo")){
-								kchn="8_新闻资讯";
-							}else if(k.equals("tools")){
-								kchn="9_工具";
-							}else if(k.equals("read")){
-								kchn="10_阅读";
-							}else if(k.equals("education")){
-								kchn="11_学习教育";
-							}else if(k.equals("audio")){
-								kchn="12_音频";
-							}else if(k.equals("video")){
-								kchn="13_视频";
-							}else if(k.equals("image")){
-								kchn="14_影音图像";
-							}else if(k.equals("appstore")){
-								kchn="15_应用商店";
-							}else if(k.equals("search")){
-								kchn="16_搜索";
-							}else if(k.equals("browser")){
-								kchn="17_浏览器";
-							}else if(k.equals("others")){
-								kchn="18_其他";
-							}else if(k.equals("safety")){
-								kchn="19_安全防护";
-							}else if(k.equals("email")){
-								kchn="20_邮箱";
-							}else if(k.equals("multimsg")){
-								kchn="21_彩信";
-							}
-							
-							tag="webtagpeople";
-
-							key="mfg4_"+cdate+"_hspwebset_"+id+"_"+k;
+							id=keysplit[5];  						//hotspotid
+							hour=keysplit[3];					//hour
+							minute=keysplit[4];					//minute
+							tag=keysplit[6];						//tag
+							key="mfg4_"+cdate+"_hspwtagset_"+hour+"_"+minute+"_"+id+"_"+tag;
 							pcnt=redisserver.scard(key);
-							if(pcnt<0)pcnt=0;
-							v=String.valueOf(pcnt); //people_cnt
-							key="'"+data_time+"','"+id+"','"+tag+"','"+kchn+"','"+v+"'\n";
-							fw.write(key);
-							
-							tag="webtagflux";
-							key="mfg4_"+cdate+"_hspwtagflux_"+id+"_"+k;
-							v=redisserver.get(key);
-							if(v!=null)dnflow=Double.valueOf(v);
-							lnflow=(long)dnflow;
-							v=String.valueOf(lnflow);  
-							key="'"+data_time+"','"+id+"','"+tag+"','"+kchn+"','"+v+"'\n";
-							fw.write(key);
-							
-							num=num+1;
+							if(pcnt>0){
+								value=String.valueOf(pcnt); //people_cnt
+								if(tag.equals("game")){
+									kchn="游戏"; //1_
+								}else if(tag.equals("soccomm")){
+									kchn="社交"; //2_
+								}else if(tag.equals("instmsg")){
+									kchn="即时通信";//3_
+								}else if(tag.equals("travel")){
+									kchn="旅游出行";//4_
+								}else if(tag.equals("finance")){
+									kchn="金融理财";//5_
+								}else if(tag.equals("webbusi")){
+									kchn="网络购物";//6_
+								}else if(tag.equals("convlife")){
+									kchn="便捷生活";//7_
+								}else if(tag.equals("newsinfo")){
+									kchn="新闻资讯";//8_
+								}else if(tag.equals("tools")){
+									kchn="工具";//9_
+								}else if(tag.equals("read")){
+									kchn="阅读";//10_
+								}else if(tag.equals("education")){
+									kchn="学习教育";//11_
+								}else if(tag.equals("audio")){
+									kchn="音频";//12_
+								}else if(tag.equals("video")){
+									kchn="视频";//13_
+								}else if(tag.equals("image")){
+									kchn="影音图像";//14_
+								}else if(tag.equals("appstore")){
+									kchn="应用商店";//15_
+								}else if(tag.equals("search")){
+									kchn="搜索";//16_
+								}else if(tag.equals("browser")){
+									kchn="浏览器";//17_
+								}else if(tag.equals("others")){
+									kchn="其他";//18_
+								}else if(tag.equals("safety")){
+									kchn="安全防护";//19_
+								}else if(tag.equals("email")){
+									kchn="邮箱";//20_
+								}else if(tag.equals("multimsg")){
+									kchn="彩信";//21_
+								}
+
+								key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+value+"','"+kchn+"'\n";
+								fw.write(key);
+								num=num+1;
+							}
 						}
 					}
 					fw.close();
@@ -464,9 +471,9 @@ public class Redis_To_Mysql {
 						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
 						conn=DriverManager.getConnection(url);
 						stmt =conn.createStatement();
-						sql="delete from tb_mofang_hotspot_cust_tag where tag='webtagpeople' or tag='webtagflux'";
+						sql="delete from tb_mofang_hotspot_flow_today_tag where tag<>'1' and tag<>'2'";
 						stmt.execute(sql);
-						sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_cust_tag fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
+						sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today_tag fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
 						stmt.execute(sql);
 						conn.close();	
 						logger.info(" Set hotspot webapp info into mysql ok");
@@ -489,12 +496,13 @@ public class Redis_To_Mysql {
 		data_time=null;
 		id=null;
 		tag=null;
-		k=null;
+		day=null;
+		hour=null;
+		minute=null;
+		value=null;
+		tag=null;
 		kchn=null;
-		v=null;
 		pcnt=0;
-		dnflow=0.0;
-		lnflow=0;
 		num=0;
 		filepath=null;
 		file=null;
