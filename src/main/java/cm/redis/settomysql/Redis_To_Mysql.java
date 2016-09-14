@@ -412,7 +412,7 @@ public class Redis_To_Mysql {
 							tag=keysplit[6];						//tag
 							key="mfg4_"+cdate+"_hspwtagset_"+hour+"_"+minute+"_"+id+"_"+tag;
 							pcnt=redisserver.scard(key);
-							if(pcnt>0&&(tag.equals("instmsg")||tag.equals("video")||tag.equals("search")||tag.equals("newsinfo"))){
+							if(pcnt>0&&(tag.equals("instmsg")||tag.equals("video"))){
 								value=String.valueOf(pcnt); //people_cnt
 								if(tag.equals("game")){
 									kchn="游戏"; //1_
@@ -667,7 +667,7 @@ public class Redis_To_Mysql {
 		while(true)
 		{
 			try {
-				//Redis_To_Mysql.PersisHotspotClockInfo();   	//推送每15分钟的热点区域，热点区域标签对应的人流量，4Ghttp流量使用量数据,ok
+				Redis_To_Mysql.PersisHotspotClockInfo();   	//推送每15分钟的热点区域，热点区域标签对应的人流量，4Ghttp流量使用量数据,ok
 				Redis_To_Mysql.PersisHotspotImsiSet();      		//推送当天热点区域的imsi数据明细，ok
 				Redis_To_Mysql.PersisHotspotWebClockInfo(); //推送推送每15分钟的热点区域，上网标签的人数，ok
 				Redis_To_Mysql.PersisHeatMapClockInfo();  		//推送每15分钟的热力图人流量信息，ok
