@@ -471,7 +471,7 @@ public class Redis_To_Mysql {
 						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
 						conn=DriverManager.getConnection(url);
 						stmt =conn.createStatement();
-						sql="delete from tb_mofang_hotspot_flow_today_tag where where day='"+day+"' and tag<>'新生' and tag<>'老生'";
+						sql="delete from tb_mofang_hotspot_flow_today_tag where where day='"+day+"' and tag not like '新生' and tag not like '老生'";
 						stmt.execute(sql);
 						sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today_tag fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
 						stmt.execute(sql);
@@ -669,7 +669,7 @@ public class Redis_To_Mysql {
 			try {
 				Redis_To_Mysql.PersisHotspotClockInfo();   		//推送每15分钟的热点区域，热点区域标签对应的人流量，4Ghttp流量使用量数据,ok
 				Redis_To_Mysql.PersisHotspotImsiSet();      		//推送当天热点区域的imsi数据明细，ok
-				Redis_To_Mysql.PersisHotspotWebClockInfo(); //推送当天热点区域对应的上网标签的人数，流量累计值，ok
+				Redis_To_Mysql.PersisHotspotWebClockInfo(); //推送当天热点区域对应的上网标签的人数，ok
 				Redis_To_Mysql.PersisHeatMapClockInfo();  		//推送每15分钟的热力图人流量信息，ok
 				Thread.sleep(1000*60*15);
 			} catch (InterruptedException e) {
