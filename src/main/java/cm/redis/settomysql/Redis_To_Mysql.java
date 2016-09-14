@@ -288,7 +288,7 @@ public class Redis_To_Mysql {
 								if(firsttime!=null&&firsttime.length()>=29)
 								{
 									lasttime=firsttime.substring(15);
-									firsttime=firsttime.substring(0,15);
+									firsttime=firsttime.substring(0,14);
 									key="'"+data_time+"','"+id+"','"+imsi+"','"+firsttime+"','"+lasttime+"'\n";
 									fw.write(key);
 									num=num+1;
