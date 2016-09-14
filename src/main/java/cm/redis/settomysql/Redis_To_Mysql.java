@@ -174,7 +174,7 @@ public class Redis_To_Mysql {
 					}
 					if(numtag>0)	//有数据存在才考虑进行数据库录入
 					{
-						sql="delete from tb_mofang_hotspot_flow_today_tag where day='"+day+"'";
+						sql="delete from tb_mofang_hotspot_flow_today_tag where day='"+day+"' and (tag='新生' or tag='老生')" ;
 						stmt.execute(sql);
 						sql="load data local infile '"+filetagpath+"' replace into table tb_mofang_hotspot_flow_today_tag fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
 						stmt.execute(sql);
@@ -471,7 +471,7 @@ public class Redis_To_Mysql {
 						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
 						conn=DriverManager.getConnection(url);
 						stmt =conn.createStatement();
-						sql="delete from tb_mofang_hotspot_flow_today_tag where tag<>'1' and tag<>'2'";
+						sql="delete from tb_mofang_hotspot_flow_today_tag where where day='"+day+"' and tag<>'新生' and tag<>'老生'";
 						stmt.execute(sql);
 						sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today_tag fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
 						stmt.execute(sql);
