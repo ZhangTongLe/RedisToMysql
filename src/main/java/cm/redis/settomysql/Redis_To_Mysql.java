@@ -671,7 +671,7 @@ public class Redis_To_Mysql {
 				Redis_To_Mysql.PersisHotspotImsiSet();      		//推送当天热点区域的imsi数据明细，ok
 				Redis_To_Mysql.PersisHotspotWebClockInfo(); //推送推送每15分钟的热点区域，上网标签的人数，ok
 				Redis_To_Mysql.PersisHeatMapClockInfo();  		//推送每15分钟的热力图人流量信息，ok
-				Thread.sleep(1000*60*15);
+				Thread.sleep(1000*60*8);
 			} catch (InterruptedException e) {
 				logger.info(" Thread Flush_Redis_DB crashes: "+e.getMessage());
 			}
