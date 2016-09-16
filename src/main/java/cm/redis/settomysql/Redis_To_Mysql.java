@@ -571,10 +571,6 @@ public class Redis_To_Mysql {
 				hour=keysplit[3];
 				minute=keysplit[4];
 				keys=redisserver.keys(key="mfg4_"+cdate+"_hmset_"+hour+"_"+minute+"_*");
-				if(keys==null||keys.size()==0){
-					cdate=TimeFormatter.getYestoday2();
-					keys=redisserver.keys(key="mfg4_"+cdate+"_hmset_"+hour+"_"+minute+"_*");
-				}
 				if(keys!=null&&keys.size()>0){
 					data_time=TimeFormatter.getNow(); 		//获取当前时间YYYY-MM-DD HH:mm:ss
 					filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_heatmap_ref.txt";
