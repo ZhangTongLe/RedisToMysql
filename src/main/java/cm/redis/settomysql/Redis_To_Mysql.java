@@ -153,7 +153,7 @@ public class Redis_To_Mysql {
 //								lnflow=(long)dnflow;
 //								net_flow=String.valueOf(lnflow);  	//net_flow from dnflow
 
-								key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','"+tag+"','student'\n";
+								key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+people_cnt+"','student','"+tag+"'\n";
 								fwtag.write(key);
 								numtag=numtag+1;
 							}
@@ -175,7 +175,7 @@ public class Redis_To_Mysql {
 					}
 					if(numtag>0)	//有数据存在才考虑进行数据库录入
 					{
-						sql="delete from tb_mofang_hotspot_flow_today_tag where data_type=\"新生\" or data_type=\"老生\"" ;
+						sql="delete from tb_mofang_hotspot_flow_today_tag where tag=\"新生\" or tag=\"老生\"" ;
 						stmt.execute(sql);
 						sql="load data local infile '"+filetagpath+"' replace into table tb_mofang_hotspot_flow_today_tag fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
 						stmt.execute(sql);
@@ -341,7 +341,7 @@ public class Redis_To_Mysql {
 									kchn="彩信";//21_
 								}
 
-								key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+value+"','"+kchn+"','webtag'\n";;
+								key="'"+data_time+"','"+id+"','"+day+"','"+hour+"','"+minute+"','"+value+"','webtag','"+kchn+"'\n";;
 								fw.write(key);
 								num=num+1;
 							}
@@ -354,7 +354,7 @@ public class Redis_To_Mysql {
 						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
 						conn=DriverManager.getConnection(url);
 						stmt =conn.createStatement();
-						sql="delete from tb_mofang_hotspot_flow_today_tag where data_type<>\"新生\" and data_type<>\"老生\"";
+						sql="delete from tb_mofang_hotspot_flow_today_tag where tag<>\"新生\" and tag<>\"老生\"";
 						stmt.execute(sql);
 						sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_flow_today_tag fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
 						stmt.execute(sql);
