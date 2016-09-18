@@ -171,7 +171,7 @@ public class Redis_To_Mysql {
 						stmt.execute(sql);
 						sql="load data local infile '"+fileflowpath+"' replace into table tb_mofang_hotspot_flow_today fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
 						stmt.execute(sql);
-						logger.info(" Set hotspots flow clock info  into mysql ok");
+						logger.info(" Set hotspots flow clock info into mysql ok");
 					}
 					if(numtag>0)	//有数据存在才考虑进行数据库录入
 					{
@@ -179,7 +179,7 @@ public class Redis_To_Mysql {
 						stmt.execute(sql);
 						sql="load data local infile '"+filetagpath+"' replace into table tb_mofang_hotspot_flow_today_tag fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
 						stmt.execute(sql);
-						logger.info(" Set hotspots tag clock info  into mysql ok");
+						logger.info(" Set hotspots tag clock info into mysql ok");
 					}
 					conn.close();
 			    }
