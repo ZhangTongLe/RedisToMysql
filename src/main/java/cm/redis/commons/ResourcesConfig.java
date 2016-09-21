@@ -26,9 +26,9 @@ public class ResourcesConfig {
 	public final static String SYN_SERVER_DATAFILE="/home/storm/netantdata/ref/tomysql/";  //正式服务器地址
 	//public final static String SYN_SERVER_DATAFILE="E:/";  					//测试地址
 	
-	public final static String MYSQL_SERVER_DRIVER="com.mysql.jdbc.Driver";	             		//mysql数据库驱动
+	public final static String MYSQL_SERVER_DRIVER="com.mysql.jdbc.Driver";	             		    //mysql数据库驱动
 	public final static String MYSQL_SERVER_URL="jdbc:mysql://10.245.254.55:3306/dtdb";		//数据库端口
-	public final static String MYSQL_USER="mysqlc";																//mysql用户名stdt
-	public final static String MYSQL_PASSWD="mysqlc";														//mysql密码ST.dt.0505.903
+	public final static String MYSQL_USER="stdt";																		//mysql用户名stdt
+	public final static String MYSQL_PASSWD="ST.dt.0505.903";													//mysql密码ST.dt.0505.903
 
 }
