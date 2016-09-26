@@ -586,7 +586,7 @@ public class Redis_To_Mysql {
 				fw.write("");
 				for(String hotid:hotspotset){
 					id=hotid; 		//获取hotspotid
-					keys=redisserver.keys("mfg4_"+cdate+"_hsptime_"+hotid+"_*");  //已经按照字典排序排好次序
+					keys=redisserver.keys("mfg4_"+cdate+"_hspimsi_"+hotid+"_*");  //已经按照字典排序排好次序
 					if(keys!=null&&keys.size()>0)
 					{
 						keylist = keys.iterator();
