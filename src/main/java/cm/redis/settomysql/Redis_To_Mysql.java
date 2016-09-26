@@ -395,126 +395,6 @@ public class Redis_To_Mysql {
 		sql=null;
 		stmt=null;
 	}
-	
-	
-	/**
-	 * 抓取当天hotspotid对应的imsi集合全部信息到mysql的表中
-	 * 表格，字段data_time，hotspotid，imsi
-	 */
-	public static void PersisHotspotImsiSet()
-	{
-		//从redis获取对应key集合相关参数
-		RedisServer redisserver=null;
-		TreeSet<String> keys=null; 
-		Iterator<String> keylist =null;
-		Set<String> imsiset=null;
-		String key=null;
-		String cdate=null;
-		
-		int num=0;//统计记录
-		
-		//推送的字段组合
-		String data_time=null;
-		String id=null;
-		String firsttime=null;
-		String lasttime=null;
-		
-		//形成数据文件参数
-		String filepath=null;
-		File file = null;
-		FileWriter fw=null;
-		
-		//数据库操作相关参数
-		Connection conn=null;
-		String sql=null;
-		String url=ResourcesConfig.MYSQL_SERVER_URL+"?user="+ ResourcesConfig.MYSQL_USER
-				+"&password="+ResourcesConfig.MYSQL_PASSWD+"&characterEncoding=UTF8";
-		Statement stmt=null;
-		
-		logger.info(" Start to get hotspot imsi set redis-keys");
-		try{
-			//获取实例
-			redisserver=RedisServer.getInstance();					
-			cdate=TimeFormatter.getDate2();        							//获取当前日期YYYY-MM-DD
-			keys=redisserver.keys("mfg4_"+cdate+"_hspdayset_*"); 		//获取当前日期YYYY-MM-DD累计的imsi信息的keys
-			num=0;//统计记录
-			if(keys==null||keys.size()==0){
-				cdate=TimeFormatter.getYestoday2();
-				keys=redisserver.keys("mfg4_"+cdate+"_hspdayset_*");
-			}
-			if(keys!=null&&keys.size()>0)
-			{
-				data_time=TimeFormatter.getNow(); 							//获取当前时间YYYY-MM-DD HH:mm:ss
-				filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_detail.txt";
-				file = new File(filepath);
-				if (!file.isDirectory()) { 
-					fw=new FileWriter(file);
-					fw.write("");
-					keylist = keys.iterator();
-					while(keylist.hasNext())
-					{
-						key=keylist.next().toString();
-						if(key.length()>26)
-						{
-							id=key.substring(26); //获取hotspotid
-							imsiset=redisserver.smembers(key);
-							for(String imsi:imsiset){
-								key="mfg4_"+cdate+"_"+imsi+"_"+id;
-								firsttime=redisserver.get(key);
-								if(firsttime!=null&&firsttime.length()>=29)
-								{
-									lasttime=firsttime.substring(15);
-									firsttime=firsttime.substring(0,14);
-									key="'"+data_time+"','"+id+"','"+imsi+"','"+firsttime+"','"+lasttime+"'\n";
-									fw.write(key);
-									num=num+1;
-								}
-							}
-						}
-					}
-					fw.close();
-					logger.info(" Complete get hotspot imsi set, get "+num+" records");
-					if(num>0)//有数据存在才考虑进行数据库录入
-					{
-						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
-						conn=DriverManager.getConnection(url);
-						stmt =conn.createStatement();
-						sql="delete from tb_mofang_hotspot_detail";
-						stmt.execute(sql);
-						sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_detail fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
-						stmt.execute(sql);
-						conn.close();	
-						logger.info(" Set hotspots imsi set into mysql ok");
-					}
-			    }
-			}else{
-				logger.info(" Can't get redis hotspot imsi set keys.");	
-			}
-		} catch (Exception e) {
-			logger.info(" Thread Flush_Redis_DB Pushing hotspots info to Mysql crashes: "+e.getMessage());
-		}
-		
-		//释放内存
-		redisserver=null;
-		keys=null;
-		keylist=null;
-		imsiset=null;
-		key=null;
-		cdate=null;
-		data_time=null;
-		id=null;
-		firsttime=null;
-		lasttime=null;
-		num=0;
-		filepath=null;
-		file=null;
-		fw=null;
-		
-		conn=null;
-		sql=null;
-		stmt=null;
-	}
-	
 
 	/**
 	 * 抓取每N分钟的热点区域人流量，【4Ghttp流量使用量数据，表中无数据】，推送到mysql的dtdb数据库的tb_mofang_heatmap_ref表格中
@@ -656,6 +536,120 @@ public class Redis_To_Mysql {
 		stmt=null;
 	}
 
+	/**
+	 * 每隔1小时，抓取当天hotspotid对应的imsi集合全部信息到mysql的表中
+	 * 表格，字段data_time，hotspotid，imsi
+	 */
+	public static void PersisHotspotImsiSet(){
+		//从redis获取对应key集合相关参数
+		RedisServer redisserver=null;
+		TreeSet<String> keys=null; 
+		Iterator<String> keylist =null;
+		Set<String> hotspotset=null;
+		String key=null;
+		String cdate=null;
+		String imsi=null;
+		
+		int size=0;
+		int num=0;//统计记录
+		
+		//推送的字段组合
+		String data_time=null;
+		String id=null;
+		String firsttime=null;
+		String lasttime=null;
+		
+		//形成数据文件参数
+		String filepath=null;
+		File file = null;
+		FileWriter fw=null;
+		
+		//数据库操作相关参数
+		Connection conn=null;
+		String sql=null;
+		String url=ResourcesConfig.MYSQL_SERVER_URL+"?user="+ ResourcesConfig.MYSQL_USER
+				+"&password="+ResourcesConfig.MYSQL_PASSWD+"&characterEncoding=UTF8";
+		Statement stmt=null;
+		
+		logger.info(" Start to get hotspot imsi set redis-keys");
+		try{
+			//获取实例
+			redisserver=RedisServer.getInstance();					
+			cdate=TimeFormatter.getDate2();        						//获取当前日期YYYY-MM-DD
+			num=0;//统计记录
+			hotspotset=redisserver.smembers("ref_hsp_set");
+			data_time=TimeFormatter.getNow(); 							//获取当前时间YYYY-MM-DD HH:mm:ss
+			filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_detail.txt";
+			file = new File(filepath);
+			if (!file.isDirectory()) { 
+				fw=new FileWriter(file);
+				fw.write("");
+				for(String hotid:hotspotset){
+					id=hotid; 		//获取hotspotid
+					keys=redisserver.keys("mfg4_"+cdate+"_hsptime_"+hotid+"_*");  //已经按照字典排序排好次序
+					if(keys!=null&&keys.size()>0)
+					{
+						keylist = keys.iterator();
+						while(keylist.hasNext())
+						{
+							key=keylist.next().toString();
+							size=key.lastIndexOf("_");
+							if(size>24){
+								imsi=key.substring(size+1);
+								firsttime=redisserver.get(key);
+								if(firsttime!=null&&firsttime.length()>=29)
+								{
+									lasttime=firsttime.substring(15);
+									firsttime=firsttime.substring(0,14);
+									key="'"+data_time+"','"+id+"','"+imsi+"','"+firsttime+"','"+lasttime+"'\n";
+									fw.write(key);
+									num=num+1;
+								}
+							}
+						}
+					}else{
+						logger.info(" Can't get redis hotspot imsi set keys.");	
+					}
+				}
+				fw.close();
+				logger.info(" Complete get hotspot imsi set, get "+num+" records");
+				if(num>0)//有数据存在才考虑进行数据库录入
+				{
+					Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
+					conn=DriverManager.getConnection(url);
+					stmt =conn.createStatement();
+					sql="delete from tb_mofang_hotspot_detail";
+					stmt.execute(sql);
+					sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_detail fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
+					stmt.execute(sql);
+					conn.close();	
+					logger.info(" Set hotspots imsi set into mysql ok");
+				}
+			}
+		} catch (Exception e) {
+			logger.info(" Thread Flush_Redis_DB Pushing hotspots info to Mysql crashes: "+e.getMessage());
+		}
+		
+		//释放内存
+		redisserver=null;
+		keys=null;
+		keylist=null;
+		key=null;
+		hotspotset=null;
+		cdate=null;
+		data_time=null;
+		id=null;
+		firsttime=null;
+		lasttime=null;
+		num=0;
+		filepath=null;
+		file=null;
+		fw=null;
+		
+		conn=null;
+		sql=null;
+		stmt=null;
+	}
 
 	/**
 	 * 主函数
@@ -666,14 +660,136 @@ public class Redis_To_Mysql {
 		while(true)
 		{
 			try {
-				Redis_To_Mysql.PersisHotspotClockInfo();   		//推送每8分钟的热点区域，热点区域标签对应的人流量，4Ghttp流量使用量数据,ok
-				Redis_To_Mysql.PersisHotspotImsiSet();      		//推送当天热点区域的imsi数据明细，ok
-				Redis_To_Mysql.PersisHotspotWebClockInfo(); //推送推送每8分钟的热点区域，上网标签的人数，ok
-				Redis_To_Mysql.PersisHeatMapClockInfo();  		//推送每15分钟的热力图人流量信息，ok
-				Thread.sleep(1000*60*8);
+				Redis_To_Mysql.PersisHotspotImsiSet();      			//推送当天热点区域的imsi数据明细，ok		
+				Thread.sleep(1000*60*60);
 			} catch (InterruptedException e) {
 				logger.info(" Thread Flush_Redis_DB crashes: "+e.getMessage());
 			}
 		}
 	}
 }
+
+//Redis_To_Mysql.PersisHotspotClockInfo();   		//推送每8分钟的热点区域，热点区域标签对应的人流量，4Ghttp流量使用量数据,ok
+//Redis_To_Mysql.PersisHotspotWebClockInfo(); 	//推送推送每8分钟的热点区域，上网标签的人数，ok
+//Redis_To_Mysql.PersisHeatMapClockInfo();  		//推送每15分钟的热力图人流量信息，ok
+
+//keys=redisserver.keys("mfg4_"+cdate+"_hspdayset_*"); 		//获取当前日期YYYY-MM-DD累计的imsi信息的keys
+//num=0;//统计记录
+//if(keys==null||keys.size()==0){
+//	cdate=TimeFormatter.getYestoday2();
+//	keys=redisserver.keys("mfg4_"+cdate+"_hspdayset_*");
+//}
+
+//public static void PersisHotspotImsiSet()
+//{
+//	//从redis获取对应key集合相关参数
+//	RedisServer redisserver=null;
+//	TreeSet<String> keys=null; 
+//	Iterator<String> keylist =null;
+//	Set<String> imsiset=null;
+//	String key=null;
+//	String cdate=null;
+//	
+//	int num=0;//统计记录
+//	
+//	//推送的字段组合
+//	String data_time=null;
+//	String id=null;
+//	String firsttime=null;
+//	String lasttime=null;
+//	
+//	//形成数据文件参数
+//	String filepath=null;
+//	File file = null;
+//	FileWriter fw=null;
+//	
+//	//数据库操作相关参数
+//	Connection conn=null;
+//	String sql=null;
+//	String url=ResourcesConfig.MYSQL_SERVER_URL+"?user="+ ResourcesConfig.MYSQL_USER
+//			+"&password="+ResourcesConfig.MYSQL_PASSWD+"&characterEncoding=UTF8";
+//	Statement stmt=null;
+//	
+//	logger.info(" Start to get hotspot imsi set redis-keys");
+//	try{
+//		//获取实例
+//		redisserver=RedisServer.getInstance();					
+//		cdate=TimeFormatter.getDate2();        							//获取当前日期YYYY-MM-DD
+//		keys=redisserver.keys("mfg4_"+cdate+"_hspdayset_*"); 	//获取当前日期YYYY-MM-DD累计的imsi信息的keys
+//		num=0;//统计记录
+//		if(keys==null||keys.size()==0){
+//			cdate=TimeFormatter.getYestoday2();
+//			keys=redisserver.keys("mfg4_"+cdate+"_hspdayset_*");
+//		}
+//		if(keys!=null&&keys.size()>0)
+//		{
+//			data_time=TimeFormatter.getNow(); 							//获取当前时间YYYY-MM-DD HH:mm:ss
+//			filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_detail.txt";
+//			file = new File(filepath);
+//			if (!file.isDirectory()) { 
+//				fw=new FileWriter(file);
+//				fw.write("");
+//				keylist = keys.iterator();
+//				while(keylist.hasNext())
+//				{
+//					key=keylist.next().toString();
+//					if(key.length()>26)
+//					{
+//						id=key.substring(26); //获取hotspotid
+//						imsiset=redisserver.smembers(key);
+//						for(String imsi:imsiset){
+//							key="mfg4_"+cdate+"_time_"+id+"_"+imsi;
+//							firsttime=redisserver.get(key);
+//							if(firsttime!=null&&firsttime.length()>=29)
+//							{
+//								lasttime=firsttime.substring(15);
+//								firsttime=firsttime.substring(0,14);
+//								key="'"+data_time+"','"+id+"','"+imsi+"','"+firsttime+"','"+lasttime+"'\n";
+//								fw.write(key);
+//								num=num+1;
+//							}
+//						}
+//					}
+//				}
+//				fw.close();
+//				logger.info(" Complete get hotspot imsi set, get "+num+" records");
+//				if(num>0)//有数据存在才考虑进行数据库录入
+//				{
+//					Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
+//					conn=DriverManager.getConnection(url);
+//					stmt =conn.createStatement();
+//					sql="delete from tb_mofang_hotspot_detail";
+//					stmt.execute(sql);
+//					sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_detail fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
+//					stmt.execute(sql);
+//					conn.close();	
+//					logger.info(" Set hotspots imsi set into mysql ok");
+//				}
+//		    }
+//		}else{
+//			logger.info(" Can't get redis hotspot imsi set keys.");	
+//		}
+//	} catch (Exception e) {
+//		logger.info(" Thread Flush_Redis_DB Pushing hotspots info to Mysql crashes: "+e.getMessage());
+//	}
+//	
+//	//释放内存
+//	redisserver=null;
+//	keys=null;
+//	keylist=null;
+//	imsiset=null;
+//	key=null;
+//	cdate=null;
+//	data_time=null;
+//	id=null;
+//	firsttime=null;
+//	lasttime=null;
+//	num=0;
+//	filepath=null;
+//	file=null;
+//	fw=null;
+//	
+//	conn=null;
+//	sql=null;
+//	stmt=null;
+//}
