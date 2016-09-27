@@ -23,8 +23,8 @@ public class ResourcesConfig {
 
 	
 	// 数据枢纽接口的文件，以及数据存放路径，最后带有/
-	public final static String SYN_SERVER_DATAFILE="/home/storm/netantdata/ref/tomysql/";  //正式服务器地址
-	//public final static String SYN_SERVER_DATAFILE="E:/";  					//测试地址
+	//public final static String SYN_SERVER_DATAFILE="/home/storm/netantdata/ref/tomysql/";  //正式服务器地址
+	public final static String SYN_SERVER_DATAFILE="E:/";  					//测试地址
 	
 	public final static String MYSQL_SERVER_DRIVER="com.mysql.jdbc.Driver";	             		    //mysql数据库驱动
 	public final static String MYSQL_SERVER_URL="jdbc:mysql://10.245.254.55:3306/dtdb";		//数据库端口

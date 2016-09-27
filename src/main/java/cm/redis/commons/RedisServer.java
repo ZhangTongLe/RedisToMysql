@@ -11,6 +11,8 @@ import cm.redis.commons.ResourcesConfig;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.ScanParams;
+import redis.clients.jedis.ScanResult;
 import redis.clients.jedis.SortingParams;
 
 /**
@@ -114,7 +116,28 @@ public class RedisServer {
         } finally{   
         	if(jedis!=null)jedis.close();//归还资源  
        }  
-    }  
+    } 
+	
+	/**
+	 * 游标方式获取对应的key，比keys操作更加节省资源，便于使用
+	 * @param cursor 游标，初始为0，最后返回为0，则表示遍历完成
+	 * @param params 游标对应的匹配参数包括count和match
+	 * @return
+	 */
+	public ScanResult<String> scan(String cursor, ScanParams params){
+		ScanResult<String> scankey=null;
+		Jedis jedis=null;
+		 try {  
+        	jedis=jedisPool.getResource();  //获取jedis连接池
+        	scankey=jedis.scan(cursor, params);
+            return scankey;
+		 } catch(Exception ex){  
+            logger.info("Scan keys error: "+ex.getMessage());  
+            return null;
+		 } finally{   
+        	if(jedis!=null)jedis.close();//归还资源  
+		 }  
+	}
 	/*通用key操作结束*/
 	
 	/*String操作*/
@@ -314,6 +337,26 @@ public class RedisServer {
 		try{
 			jedis=jedisPool.getResource();  //获取jedis连接池
 			return jedis.smembers(key);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
+			return null;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
+		}
+	}
+	
+	/**
+	 * 检索集合中的元素，相比较smembers，效率更高，不锁表
+	 * @param key 集合key
+	 * @param cursor 游标，0开始，再次获取0表示结束
+	 * @param params 标记需要检索的元素模式
+	 * @return
+	 */
+	public ScanResult<String> sscan(String key, String cursor,ScanParams params){
+		Jedis jedis=null;
+		try{
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.sscan(key, cursor, params);
 		}catch(Exception ex){
 			logger.info("jedis operation error:"+ex.getMessage());
 			return null;
