@@ -16,7 +16,7 @@ public class ResourcesConfig {
 	public final static int MAX_IDLE = 8;			 								//控制一个pool最多有多少个状态为idle(空闲的)的jedis实例，默认值是8。
 	public final static int MAX_WAIT =100*1000;  								//等待可用连接的最大时间，单位毫秒，默认值为-1，表示永不超时。如果超过等待时间，则直接抛出JedisConnectionException；
 	public final static boolean TEST_ON_BORROW = true;					//在borrow一个jedis实例时，是否提前进行validate操作；如果为true，则得到的jedis实例均是可用的；
-	public final static int TIMEOUT=15*1000;										//获取jedis返回信息的超时时间
+	public final static int TIMEOUT=60*1000;										//获取jedis返回信息的超时时间
 	
 	public final static String REDIS_SERVER_IP="10.245.254.56";		//redis数据库合库后的IP地址
 	public final static int REDIS_SERVER_PORT=7002;						//redis数据库端口
