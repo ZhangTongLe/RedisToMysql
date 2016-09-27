@@ -74,8 +74,6 @@ public class Redis_To_Mysql {
 			redisserver=RedisServer.getInstance();					
 			cdate=TimeFormatter.getDate2();        						//获取当前日期YYYY-MM-DD
 			num=0;//统计记录
-			//hotspotset=redisserver.smembers("ref_hsp_set");
-			
 			cursor="0";
 			scanParams.count(20);
 			reslist=new ArrayList<String>();
@@ -103,7 +101,6 @@ public class Redis_To_Mysql {
 
 				for(int j=0;j<hotspotset.size();j++){
 					hotid=hotspotset.get(j);
-					System.out.println(hotid);
 					id=hotid; 		//获取hotspotid
 					cursor="0";
 					scanParams.match("mfg4_"+cdate+"_hspimsi_"+hotid+"_*");
