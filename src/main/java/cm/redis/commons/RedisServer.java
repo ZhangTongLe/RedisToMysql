@@ -116,7 +116,7 @@ public class RedisServer {
         } finally{   
         	if(jedis!=null)jedis.close();//归还资源  
        }  
-    } 
+    }
 	
 	/**
 	 * 游标方式获取对应的key，比keys操作更加节省资源，便于使用
@@ -124,19 +124,40 @@ public class RedisServer {
 	 * @param params 游标对应的匹配参数包括count和match
 	 * @return
 	 */
-	public ScanResult<String> scan(String cursor, ScanParams params){
+	public TreeSet<String> scan(String pattern){
+		TreeSet<String> keys = new TreeSet<String>();
 		ScanResult<String> scankey=null;
+		List<String> tmplist=null;
+		String cursor=null;
+		ScanParams params=new ScanParams();
 		Jedis jedis=null;
-		 try {  
+		int i=0;
+        try {
+        	cursor="0";
+        	params.match(pattern);
+        	params.count(50);
         	jedis=jedisPool.getResource();  //获取jedis连接池
-        	scankey=jedis.scan(cursor, params);
-            return scankey;
-		 } catch(Exception ex){  
-            logger.info("Scan keys error: "+ex.getMessage());  
+        	do{
+        		scankey=jedis.scan(cursor, params);
+        		if(scankey!=null)
+        		{
+        			cursor=scankey.getStringCursor();
+        			tmplist=scankey.getResult();
+        			if(tmplist!=null&&tmplist.size()>0){
+        				if(tmplist.get(0).contains("empty list or set")==false)
+        				{
+        					for(i=0;i<tmplist.size();i++)keys.add(tmplist.get(i));//将String元素逐个加入，默认重复不会加入
+        				}
+        			}
+        		}
+        	}while(cursor.equals("0")==false); 
+        } catch(Exception ex){  
+        	logger.info("Scan keys error: "+ex.getMessage());  
             return null;
-		 } finally{   
+        } finally{  
         	if(jedis!=null)jedis.close();//归还资源  
-		 }  
+        }  
+        return keys;  
 	}
 	/*通用key操作结束*/
 	
@@ -352,17 +373,40 @@ public class RedisServer {
 	 * @param params 标记需要检索的元素模式
 	 * @return
 	 */
-	public ScanResult<String> sscan(String key, String cursor,ScanParams params){
+	public TreeSet<String> sscan(String key, String pattern){
+		TreeSet<String> members = new TreeSet<String>();
+		ScanResult<String> scankey=null;
+		List<String> tmplist=null;
+		String cursor=null;
+		ScanParams params=new ScanParams();
 		Jedis jedis=null;
-		try{
-			jedis=jedisPool.getResource();  //获取jedis连接池
-			return jedis.sscan(key, cursor, params);
-		}catch(Exception ex){
-			logger.info("jedis operation error:"+ex.getMessage());
-			return null;
-		}finally {
-			if(jedis!=null)jedis.close();		//使用完毕归还资源
-		}
+		int i=0;
+        try {
+        	cursor="0";
+        	if(pattern!=null)params.match(pattern);
+        	params.count(50);
+        	jedis=jedisPool.getResource();  //获取jedis连接池
+        	do{
+        		scankey=jedis.sscan(key, cursor, params);
+        		if(scankey!=null)
+        		{
+        			cursor=scankey.getStringCursor();
+        			tmplist=scankey.getResult();
+        			if(tmplist!=null&&tmplist.size()>0){
+        				if(tmplist.get(0).contains("empty list or set")==false)
+        				{
+        					for(i=0;i<tmplist.size();i++)members.add(tmplist.get(i));//将String元素逐个加入，默认重复不会加入
+        				}
+        			}
+        		}
+        	}while(cursor.equals("0")==false); 
+        } catch(Exception ex){  
+        	logger.info("Scan keys error: "+ex.getMessage());  
+            return null;
+        } finally{  
+        	if(jedis!=null)jedis.close();//归还资源  
+        }  
+        return members;
 	}
 	/*set集合操作封装结束*/
 	

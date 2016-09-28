@@ -5,16 +5,14 @@ import java.io.FileWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
+import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
 import cm.redis.commons.RedisServer;
 import cm.redis.commons.ResourcesConfig;
 import cm.redis.commons.TimeFormatter;
-import redis.clients.jedis.ScanParams;
-import redis.clients.jedis.ScanResult;
 
 
 /**
@@ -37,16 +35,12 @@ public class Redis_To_Mysql {
 		String cdate=null;
 		String imsi=null;
 		
-		ScanResult<String> hotspotResult=null;
-		ScanResult<String> scankeyResult=null;
-		ScanParams scanParams=new ScanParams();
-		String cursor="0";
-		List<String> scanreslist=null;
-		List<String> reslist=null;
-		List<String> hotspotset=null;
+		TreeSet<String> hotspotset=null;
+		Iterator<String> scanreslist=null;
+		TreeSet<String> keyset=null;
+		Iterator<String> keylist=null;
 		String hotid=null;
-		
-		int length=0;
+
 		int size=0;
 		int num=0;//统计记录
 		
@@ -74,83 +68,63 @@ public class Redis_To_Mysql {
 			redisserver=RedisServer.getInstance();					
 			cdate=TimeFormatter.getDate2();        						//获取当前日期YYYY-MM-DD
 			num=0;//统计记录
-			cursor="0";
-			scanParams.count(20);
-			reslist=new ArrayList<String>();
-			scanreslist=new ArrayList<String>();
-			do{
-				key="ref_hsp_set";
-				hotspotResult=redisserver.sscan(key, cursor, scanParams);
-				if(hotspotResult!=null){
-					reslist=hotspotResult.getResult();
-					cursor=hotspotResult.getStringCursor();
-					if(reslist!=null&&reslist.size()>0)
+			key="ref_hsp_set";
+			hotspotset=redisserver.sscan(key, null);						//扫描获取全部的集合数据
+			if(hotspotset!=null&&hotspotset.size()>0){
+				data_time=TimeFormatter.getNow(); 							//获取当前时间YYYY-MM-DD HH:mm:ss
+				filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_detail.txt";
+				file = new File(filepath);
+				if (!file.isDirectory()) { 
+					fw=new FileWriter(file);
+					fw.write("");
+					
+					scanreslist = hotspotset.iterator();
+					while(scanreslist.hasNext())
 					{
-						if(reslist.get(0).contains("empty list or set")==false)scanreslist.addAll(reslist);
-					}
-				}
-			}while(cursor.equals("0")==false);
-			
-			hotspotset=scanreslist;
-			scanreslist=null;
-			reslist=null;
-			
-			data_time=TimeFormatter.getNow(); 							//获取当前时间YYYY-MM-DD HH:mm:ss
-			filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_detail.txt";
-			file = new File(filepath);
-			if (!file.isDirectory()) { 
-				fw=new FileWriter(file);
-				fw.write("");
-
-				for(int j=0;j<hotspotset.size();j++){
-					hotid=hotspotset.get(j);
-					id=hotid; 		//获取hotspotid
-					cursor="0";
-					scanParams.match("mfg4_"+cdate+"_hspimsi_"+hotid+"_*");
-					do{
-						scankeyResult=redisserver.scan(cursor, scanParams);
-						if(scankeyResult!=null){
-							cursor=scankeyResult.getStringCursor();
-							scanreslist=scankeyResult.getResult();
-							length=0;
-							size=0;
-							if(scanreslist!=null&&scanreslist.size()>0)
+						hotid=scanreslist.next().toString();
+						id=hotid; 		//获取hotspotid
+						keyset=redisserver.scan("mfg4_"+cdate+"_hspimsi_"+hotid+"_*");
+						if(keyset!=null&&keyset.size()>0)
+						{
+							keylist=keyset.iterator();
+							while(keylist.hasNext())
 							{
-								length=scanreslist.size();
-								for(int i=0;i<length;i++){
-									key=scanreslist.get(i);
-									size=key.lastIndexOf("_");
-									if(size>=24){
-										imsi=key.substring(size+1);
-										firsttime=redisserver.get(scanreslist.get(i));
-										if(firsttime!=null&&firsttime.length()>=29)
-										{
-											lasttime=firsttime.substring(15);
-											firsttime=firsttime.substring(0,14);
-											key="'"+data_time+"','"+id+"','"+imsi+"','"+firsttime+"','"+lasttime+"'\n";
-											fw.write(key);
-											num=num+1;
-										}
+								key=keylist.next().toString();
+								size=key.lastIndexOf("_");
+								if(size>=24){
+									imsi=key.substring(size+1);
+									firsttime=redisserver.get(key);
+									if(firsttime!=null&&firsttime.length()>=29)
+									{
+										lasttime=firsttime.substring(15);
+										firsttime=firsttime.substring(0,14);
+										key="'"+data_time+"','"+id+"','"+imsi+"','"+firsttime+"','"+lasttime+"'\n";
+										fw.write(key);
+										num=num+1;
 									}
 								}
 							}
 						}
-					}while(cursor.equals("0")==false);
+					}
+					fw.close();
+					logger.info(" Complete get hotspot imsi set, get "+num+" records");
+					if(num>0)//有数据存在才考虑进行数据库录入
+					{
+						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
+						conn=DriverManager.getConnection(url);
+						stmt =conn.createStatement();
+						sql="delete from tb_mofang_hotspot_detail";
+						stmt.execute(sql);
+						sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_detail fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
+						stmt.execute(sql);
+						conn.close();	
+						logger.info(" Set hotspots imsi set into mysql ok");
+					}
+				}else{
+					logger.info("file creation error...");
 				}
-				fw.close();
-				logger.info(" Complete get hotspot imsi set, get "+num+" records");
-				if(num>0)//有数据存在才考虑进行数据库录入
-				{
-					Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
-					conn=DriverManager.getConnection(url);
-					stmt =conn.createStatement();
-					sql="delete from tb_mofang_hotspot_detail";
-					stmt.execute(sql);
-					sql="load data local infile '"+filepath+"' replace into table tb_mofang_hotspot_detail fields terminated by ',' enclosed by '\\'' lines terminated by '\\n'";
-					stmt.execute(sql);
-					conn.close();	
-					logger.info(" Set hotspots imsi set into mysql ok");
-				}
+			}else{
+				logger.info("ref_hsp_set is empty...");
 			}
 		} catch (Exception e) {
 			logger.info(" Thread Flush_Redis_DB Pushing hotspots info to Mysql crashes: "+e.getMessage());
@@ -162,16 +136,12 @@ public class Redis_To_Mysql {
 		cdate=null;
 		imsi=null;
 		
-		hotspotResult=null;
-		scankeyResult=null;
-		scanParams=null;
-		cursor=null;
-		scanreslist=null;
-		reslist=null;
 		hotspotset=null;
+		scanreslist=null;
+		keyset=null;
+		keylist=null;
 		hotid=null;
 		
-		length=0;
 		size=0;
 		num=0;//统计记录
 		
