@@ -119,7 +119,30 @@ public class RedisServer {
     }
 	
 	/**
-	 * 游标方式获取对应的key，比keys操作更加节省资源，便于使用
+	 * 游标方式获取对应的key，比keys操作更加节省资源，便于使用，方式1，按照需求获取，无需一次获取多个keys，节约后台内存
+	 * 但是需要调用程序自行去重复key，自行对key做排序，并且按需继续提供params参数配置
+	 * @param cursor 游标，初始为0，最后返回为0，则表示遍历完成
+	 * @param params 游标对应的匹配参数包括count和match
+	 * @return
+	 */
+	public ScanResult<String> scan(String cursor, ScanParams params){
+		ScanResult<String> scankey=null;
+		Jedis jedis=null;
+		 try {  
+        	jedis=jedisPool.getResource();  //获取jedis连接池
+        	scankey=jedis.scan(cursor, params);
+            return scankey;
+		 } catch(Exception ex){  
+            logger.info("Scan keys error: "+ex.getMessage());  
+            return null;
+		 } finally{   
+        	if(jedis!=null)jedis.close();//归还资源  
+		 }  
+	}
+	
+	/**
+	 * 游标方式获取对应的key，比keys操作更加节省资源，便于使用，一次获取全部keys，比较消耗内存，
+	 * 已经去重复，完成排序，仅需提供params参数模式配置
 	 * @param cursor 游标，初始为0，最后返回为0，则表示遍历完成
 	 * @param params 游标对应的匹配参数包括count和match
 	 * @return
@@ -367,7 +390,29 @@ public class RedisServer {
 	}
 	
 	/**
-	 * 检索集合中的元素，相比较smembers，效率更高，不锁表
+	 * 检索集合中的元素，相比较smembers，效率更高，不锁表，方式1，按照需求逐步获取，节约内存
+	 * 但是需要调用程序自行对元素做排序，并且按需继续提供params参数配置
+	 * @param key 集合key
+	 * @param cursor 游标，0开始，再次获取0表示结束
+	 * @param params 标记需要检索的元素模式
+	 * @return
+	 */
+	public ScanResult<String> sscan(String key, String cursor,ScanParams params){
+		Jedis jedis=null;
+		try{
+			jedis=jedisPool.getResource();  //获取jedis连接池
+			return jedis.sscan(key, cursor, params);
+		}catch(Exception ex){
+			logger.info("jedis operation error:"+ex.getMessage());
+			return null;
+		}finally {
+			if(jedis!=null)jedis.close();		//使用完毕归还资源
+		}
+	}
+	
+	/**
+	 * 检索集合中的元素，相比较smembers，效率更高，不锁表，方式2，全部获取元素，可能会比较消耗内存
+	 * 但是需要调用程序自行对元素做排序，并且按需继续提供params参数配置
 	 * @param key 集合key
 	 * @param cursor 游标，0开始，再次获取0表示结束
 	 * @param params 标记需要检索的元素模式
