@@ -84,7 +84,10 @@ public class Redis_To_Mysql {
 				if(hotspotResult!=null){
 					reslist=hotspotResult.getResult();
 					cursor=hotspotResult.getStringCursor();
-					if(reslist!=null&&reslist.size()>0)scanreslist.addAll(reslist);
+					if(reslist!=null&&reslist.size()>0)
+					{
+						if(reslist.get(0).contains("empty list or set")==false)scanreslist.addAll(reslist);
+					}
 				}
 			}while(cursor.equals("0")==false);
 			
