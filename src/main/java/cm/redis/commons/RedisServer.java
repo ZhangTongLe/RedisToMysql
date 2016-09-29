@@ -49,6 +49,13 @@ public class RedisServer {
 	 * @return
 	 */
 	public static RedisServer getInstance() {
+		if(INSTANCE==null){
+			synchronized (RedisServer.class) {
+				if(INSTANCE==null){
+					INSTANCE=new RedisServer();
+				}
+			}
+		}
 		return INSTANCE;
 	}
 	
