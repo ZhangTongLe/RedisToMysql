@@ -17,7 +17,7 @@ public class RedisInstanceDataTest {
 		String key=null;
 		List<String> chineselist=null;
 		String decch=null;
-		int num =200;
+		int num =300;
 		try {
 			if(redisServer!=null){
 				//对集合key进行排序
@@ -31,7 +31,7 @@ public class RedisInstanceDataTest {
 					{
 						decch=new String(Base64.decodeBase64(chineselist.get(i)),"UTF-8");
 						key="mfg4_"+tdate+"_Zh_"+chineselist.get(i);
-						System.out.println(chineselist.get(i)+"	"+decch+" "+redisServer.get(key));
+						System.out.println(i+"	"+chineselist.get(i)+"	"+decch+" "+redisServer.get(key));
 					}
 				}
 			}
