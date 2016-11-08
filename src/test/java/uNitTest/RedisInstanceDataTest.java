@@ -30,8 +30,14 @@ public class RedisInstanceDataTest {
 					for(int i=0;i<chineselist.size();i++)
 					{
 						decch=new String(Base64.decodeBase64(chineselist.get(i)));
+						decch=decch.replace("男士", "");
+						decch=decch.replace("女士", "");
+						decch=decch.replace("联通", "");
+						decch=decch.replace("电信", "");
+						decch=decch.replace("旗舰店", "");
+						decch=decch.replace("官方", "");
 						key="mfg4_"+tdate+"_ebusiw_"+chineselist.get(i);
-						if(decch.contains("手机")==false)System.out.println(i+"	"+decch+" "+redisServer.get(key));
+						if(decch.contains("手机")==false&&decch.length()>0)System.out.println(i+"	"+decch+" "+redisServer.get(key));//
 					}
 				}
 			}
