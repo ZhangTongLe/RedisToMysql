@@ -74,6 +74,7 @@ public class Redis_To_Mysql {
 		try{
 			//获取实例
 			redisserver=RedisServer.getInstance();
+			cdate=TimeFormatter.getDate2();
 			filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_imsihotsearch_detail.txt";
 			file = new File(filepath);
 			if (!file.isDirectory()) { 
