@@ -17,7 +17,25 @@ public class RedisInstanceDataTest {
 		String decch=null;
 		SortingParams sortingParams=new SortingParams();
 		List<String> chineselist=null;
-		int num =500;
+		int num =600;
+		
+		//测试base64解码
+//		String[] test=null;
+//		String url=	"5omL5py6,5ZCM5Z-O";
+//		String res=null;
+//		
+//		try {
+//			test=url.split(",");
+//			for(int i=0;i<test.length;i++)
+//			{	
+//				res = new String(Base64.decodeBase64(test[i]),"UTF-8");
+//				System.out.println(res);
+//			}
+//			
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+		
 		try {
 			if(redisServer!=null){
 				//对集合key进行排序
@@ -46,7 +64,7 @@ public class RedisInstanceDataTest {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-//
+
 //		//获取中文对应的base64编码
 //		//测试中文提取与统计长度
 //		try {
@@ -83,7 +101,7 @@ public class RedisInstanceDataTest {
 //						decch=redisServer.get(key);
 //						key="ref_wtag_"+chineselist.get(i);
 //						key=redisServer.get(key);
-//						if(key.contains("网络购物"))System.out.println(chineselist.get(i)+"	"+key+"	"+decch);
+//						if(key.contains("金融理财"))System.out.println(chineselist.get(i)+"	"+key+"	"+decch);
 //					}
 //				}
 //			}
@@ -91,6 +109,6 @@ public class RedisInstanceDataTest {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
-		redisServer.close();
+//		redisServer.close();
 	}
 }
