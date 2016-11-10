@@ -98,7 +98,7 @@ public class Redis_To_Mysql {
 							imsi=key.substring(size+1); //获取imsi
 							for(String tmp:hotsearchset){
 								tmpvalues=tmp.split("#"); //获取key下的每条记录
-								if(tmpvalues.length>5){    //tmpvalues存放的就是记录的拆分字段 tac#zhbase64list#intsid#host#sdate;
+								if(tmpvalues.length>=5){    //tmpvalues存放的就是记录的拆分字段 tac#zhbase64list#intsid#host#sdate;
 									tmpzh=tmpvalues[1].split(",");
 									value=",";
 									for(int i=0;i<tmpzh.length;i++){
