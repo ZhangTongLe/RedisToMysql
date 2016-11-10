@@ -36,8 +36,9 @@ public class Redis_To_Mysql {
 		{
 			try {
 				Redis_To_Mysql.HotSearchDetailSet();					//推送当前用户对应的热搜记录
+				Thread.sleep(1000*60*30);									//每隔30分钟推送
 				Redis_To_Mysql.PersisHotspotImsiSet();      			//推送当天热点区域的imsi数据明细，ok
-				Thread.sleep(1000*60*60);									//每隔1个小时推送
+				Thread.sleep(1000*60*30);									//每隔30分钟推送
 			} catch (InterruptedException e) {
 				logger.info(" Thread Flush_Redis_DB crashes: "+e.getMessage());
 			}
