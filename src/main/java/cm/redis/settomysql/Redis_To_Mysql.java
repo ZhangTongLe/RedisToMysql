@@ -104,7 +104,7 @@ public class Redis_To_Mysql {
 									tmpzh=tmpvalues[2].split(",");
 									value=",";
 									for(int i=0;i<tmpzh.length;i++){
-										value+=new String(Base64.decodeBase64(tmpzh[i]),"UTF-8");
+										value+=","+new String(Base64.decodeBase64(tmpzh[i]),"UTF-8");
 									}
 									if(value.length()>0)tmpvalues[2]=value.substring(1);//完成对base64的解码
 									//tmpvalues[3]=tmpvalues[3].replaceAll("[\\s\b\r\f\n\t]*", "");//去除域名中多余的回车，空格等
