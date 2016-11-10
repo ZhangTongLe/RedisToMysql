@@ -102,7 +102,7 @@ public class Redis_To_Mysql {
 								tmpvalues=tmp.split("#"); 		//获取key下的每条记录
 								if(tmpvalues.length==6){    	//6 tmpvalues存放的就是记录的拆分字段 tac#ci#zhbase64list#intsid#host#sdate;
 									tmpzh=tmpvalues[2].split(",");
-									value=",";
+									value="";
 									for(int i=0;i<tmpzh.length;i++){
 										value+=","+new String(Base64.decodeBase64(tmpzh[i]),"UTF-8");
 									}
