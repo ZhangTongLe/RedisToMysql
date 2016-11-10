@@ -26,20 +26,17 @@ public class Redis_To_Mysql {
 
 	public static Logger logger=Logger.getLogger(Redis_To_Mysql.class);
 
-	public static RedisServer redisserver=null;
 	/**
 	 * 主函数
 	 * @param args
 	 */
 	public static void main(String[] args)
 	{
-		//获取实例
-		Redis_To_Mysql.redisserver=RedisServer.getInstance();
 		while(true)
 		{
 			try {
 				Redis_To_Mysql.HotSearchDetailSet();					//推送当前用户对应的热搜记录
-				//Redis_To_Mysql.PersisHotspotImsiSet();      			//推送当天热点区域的imsi数据明细，ok
+				Redis_To_Mysql.PersisHotspotImsiSet();      			//推送当天热点区域的imsi数据明细，ok
 				Thread.sleep(1000*60*60);									//每隔1个小时推送
 			} catch (InterruptedException e) {
 				logger.info(" Thread Flush_Redis_DB crashes: "+e.getMessage());
@@ -52,10 +49,7 @@ public class Redis_To_Mysql {
 	 * 表格，字段格式  IMSI|TAC|搜索词|搜索类型|网站|时间
 	 */
 	public static void HotSearchDetailSet(){
-		if(redisserver==null){
-			logger.info(" Thread HotSearchDetailSet can't get redisserver... ");
-			return;
-		}
+		RedisServer redisserver=RedisServer.getInstance();
 		//从redis获取对应key集合相关参数
 		String key=null;
 		String cdate=null;
@@ -139,6 +133,7 @@ public class Redis_To_Mysql {
 		}
 		
 		//释放内存
+		redisserver=null;
 		key=null;
 		cdate=null;
 		imsi=null;
@@ -161,10 +156,7 @@ public class Redis_To_Mysql {
 	 * 表格，字段data_time，hotspotid，imsi
 	 */
 	public static void PersisHotspotImsiSet(){
-		if(redisserver==null){
-			logger.info(" Thread PersisHotspotImsiSet can't get redisserver... ");
-			return;
-		}
+		RedisServer redisserver=RedisServer.getInstance();
 		String key=null;
 		String cdate=null;
 		String imsi=null;
@@ -267,6 +259,7 @@ public class Redis_To_Mysql {
 		}
 		
 		//释放内存
+		redisserver=null;
 		key=null;
 		cdate=null;
 		imsi=null;
