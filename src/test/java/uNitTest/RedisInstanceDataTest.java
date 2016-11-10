@@ -3,7 +3,7 @@ package uNitTest;
 //import java.io.UnsupportedEncodingException;
 import java.util.List;
 
-import org.apache.commons.codec.binary.Base64;
+//import org.apache.commons.codec.binary.Base64;
 
 import cm.redis.commons.RedisServer;
 import cm.redis.commons.TimeFormatter;
@@ -36,34 +36,34 @@ public class RedisInstanceDataTest {
 //			e.printStackTrace();
 //		}
 		
-		try {
-			if(redisServer!=null){
-				//对集合key进行排序
-		        key="mfg4_EBusiSet";//mfg4_BaiduSet
-				sortingParams.by("mfg4_"+tdate+"_ebusiw_*");//_baiduw_
-				sortingParams.desc();
-				sortingParams.limit(0, num);//限定返回结果的数量
-				chineselist=redisServer.redis_sort2(key, sortingParams);
-				if(chineselist!=null&&chineselist.size()>0){
-					for(int i=0;i<chineselist.size();i++)
-					{
-						decch=new String(Base64.decodeBase64(chineselist.get(i)));
-						decch=decch.replace("男士", "");
-						decch=decch.replace("女士", "");
-						decch=decch.replace("联通", "");
-						decch=decch.replace("电信", "");
-						decch=decch.replace("旗舰店", "");
-						decch=decch.replace("官方", "");
-						key="mfg4_"+tdate+"_ebusiw_"+chineselist.get(i);
-						if(decch.contains("手机")==false&&decch.length()>0)System.out.println(i+"	"+decch+" "+redisServer.get(key));//
-					}
-				}
-			}
-
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			if(redisServer!=null){
+//				//对集合key进行排序
+//		        key="mfg4_EBusiSet";//mfg4_BaiduSet
+//				sortingParams.by("mfg4_"+tdate+"_ebusiw_*");//_baiduw_
+//				sortingParams.desc();
+//				sortingParams.limit(0, num);//限定返回结果的数量
+//				chineselist=redisServer.redis_sort2(key, sortingParams);
+//				if(chineselist!=null&&chineselist.size()>0){
+//					for(int i=0;i<chineselist.size();i++)
+//					{
+//						decch=new String(Base64.decodeBase64(chineselist.get(i)));
+//						decch=decch.replace("男士", "");
+//						decch=decch.replace("女士", "");
+//						decch=decch.replace("联通", "");
+//						decch=decch.replace("电信", "");
+//						decch=decch.replace("旗舰店", "");
+//						decch=decch.replace("官方", "");
+//						key="mfg4_"+tdate+"_ebusiw_"+chineselist.get(i);
+//						if(decch.contains("手机")==false&&decch.length()>0)System.out.println(i+"	"+decch+" "+redisServer.get(key));//
+//					}
+//				}
+//			}
+//
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
 //		//获取中文对应的base64编码
 //		//测试中文提取与统计长度
@@ -86,29 +86,29 @@ public class RedisInstanceDataTest {
 //		}
 		
 		//测试获取热门app，需要去除浏览器和其他的app统计
-//		try {
-//			if(redisServer!=null){
-//				//对集合key进行排序
-//				key="mfg4_"+tdate+"_AppidSet";
-//				sortingParams.by("mfg4_"+tdate+"_AppUse_*");
-//				sortingParams.desc();
-//				sortingParams.limit(0, num);//限定返回结果的数量
-//				chineselist=redisServer.redis_sort2(key, sortingParams);
-//				if(chineselist!=null&&chineselist.size()>0){
-//					for(int i=0;i<chineselist.size();i++)
-//					{
-//						key="mfg4_"+tdate+"_AppUse_"+chineselist.get(i);
-//						decch=redisServer.get(key);
-//						key="ref_wtag_"+chineselist.get(i);
-//						key=redisServer.get(key);
-//						if(key.contains("金融理财"))System.out.println(chineselist.get(i)+"	"+key+"	"+decch);
-//					}
-//				}
-//			}
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		redisServer.close();
+		try {
+			if(redisServer!=null){
+				//对集合key进行排序
+				key="mfg4_"+tdate+"_AppidSet";
+				sortingParams.by("mfg4_"+tdate+"_AppUse_*");
+				sortingParams.desc();
+				sortingParams.limit(0, num);//限定返回结果的数量
+				chineselist=redisServer.redis_sort2(key, sortingParams);
+				if(chineselist!=null&&chineselist.size()>0){
+					for(int i=0;i<chineselist.size();i++)
+					{
+						key="mfg4_"+tdate+"_AppUse_"+chineselist.get(i);
+						decch=redisServer.get(key);
+						key="ref_wtag_"+chineselist.get(i);
+						key=redisServer.get(key);
+						if(key!=null&&key.contains("网络购物"))System.out.println(chineselist.get(i)+"	"+key+"	"+decch);
+					}
+				}
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		redisServer.close();
 	}
 }

@@ -25,12 +25,15 @@ public class Redis_To_Mysql {
 
 	public static Logger logger=Logger.getLogger(Redis_To_Mysql.class);
 
+	public static RedisServer redisserver=null;
 	/**
 	 * 主函数
 	 * @param args
 	 */
 	public static void main(String[] args)
 	{
+		//获取实例
+		Redis_To_Mysql.redisserver=RedisServer.getInstance();
 		while(true)
 		{
 			try {
@@ -48,8 +51,11 @@ public class Redis_To_Mysql {
 	 * 表格，字段格式  IMSI|TAC|搜索词|搜索类型|网站|时间
 	 */
 	public static void HotSearchDetailSet(){
+		if(redisserver==null){
+			logger.info(" Thread HotSearchDetailSet can't get redisserver... ");
+			return;
+		}
 		//从redis获取对应key集合相关参数
-		RedisServer redisserver=null;
 		String key=null;
 		String cdate=null;
 		
@@ -72,9 +78,8 @@ public class Redis_To_Mysql {
 		
 		logger.info(" Start to get imsi hot search info to files");
 		try{
-			//获取实例
-			redisserver=RedisServer.getInstance();
 			cdate=TimeFormatter.getDate2();
+			
 			filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_imsihotsearch_detail.txt";
 			file = new File(filepath);
 			if (!file.isDirectory()) { 
@@ -98,22 +103,22 @@ public class Redis_To_Mysql {
 							imsi=key.substring(size+1); //获取imsi
 							for(String tmp:hotsearchset){
 								tmpvalues=tmp.split("#"); 		//获取key下的每条记录
-								if(tmpvalues.length>=5){    	//tmpvalues存放的就是记录的拆分字段 tac#zhbase64list#intsid#host#sdate;
-									tmpzh=tmpvalues[1].split(",");
+								if(tmpvalues.length>=6){    	//tmpvalues存放的就是记录的拆分字段 tac#ci#zhbase64list#intsid#host#sdate;
+									tmpzh=tmpvalues[2].split(",");
 									value=",";
 									for(int i=0;i<tmpzh.length;i++){
 										value+=new String(Base64.decodeBase64(tmpzh[i]),"UTF-8");
 									}
-									if(value.length()>0)tmpvalues[1]=value.substring(1);//完成对base64的解码
-									tmpvalues[3]=tmpvalues[3].replaceAll("[\\s\b\r\f\n\t]*", "");//去除域名中多余的回车，空格等
-									key="ref_wtag_"+tmpvalues[2];
+									if(value.length()>0)tmpvalues[2]=value.substring(1);//完成对base64的解码
+									//tmpvalues[3]=tmpvalues[4].replaceAll("[\\s\b\r\f\n\t]*", "");//去除域名中多余的回车，空格等
+									key="ref_wtag_"+tmpvalues[3];
 									key=redisserver.get(key);
 									if(key!=null&&key.contains("#")==true){
 										size=key.indexOf("#");
-										tmpvalues[2]=key.substring(0,size); //搜索大类别
-										tmpvalues[3]=tmpvalues[3].replaceAll("[\\s\b\r\f\n\t]*", "")+":"+key.substring(size+1);//去除域名中多余的回车，空格等并加上域名的中文翻译
+										tmpvalues[3]=key.substring(0,size); //搜索大类别
+										tmpvalues[4]=key.substring(size+1);//去除域名中多余的回车，空格等并加上域名的中文翻译tmpvalues[4].replaceAll("[\\s\b\r\f\n\t]*", "")+":"+
 									}
-									value=imsi+"|"+tmpvalues[0]+"|"+tmpvalues[1]+"|"+tmpvalues[2]+"|"+tmpvalues[3]+"|"+tmpvalues[4];
+									value=imsi+"|"+tmpvalues[0]+"|"+tmpvalues[1]+"|"+tmpvalues[2]+"|"+tmpvalues[3]+"|"+tmpvalues[4]+"|"+tmpvalues[5];
 									fw.write(value); //将记录写入文件
 									num=num+1;
 								}
@@ -131,7 +136,6 @@ public class Redis_To_Mysql {
 		}
 		
 		//释放内存
-		redisserver=null;
 		key=null;
 		cdate=null;
 		imsi=null;
@@ -154,8 +158,10 @@ public class Redis_To_Mysql {
 	 * 表格，字段data_time，hotspotid，imsi
 	 */
 	public static void PersisHotspotImsiSet(){
-		//从redis获取对应key集合相关参数
-		RedisServer redisserver=null;
+		if(redisserver==null){
+			logger.info(" Thread PersisHotspotImsiSet can't get redisserver... ");
+			return;
+		}
 		String key=null;
 		String cdate=null;
 		String imsi=null;
@@ -188,9 +194,7 @@ public class Redis_To_Mysql {
 		Statement stmt=null;
 		
 		logger.info(" Start to get hotspot imsi set redis-keys");
-		try{
-			//获取实例
-			redisserver=RedisServer.getInstance();					
+		try{				
 			cdate=TimeFormatter.getDate2();        						//获取当前日期YYYY-MM-DD
 			num=0;//统计记录
 			key="ref_hsp_set";
@@ -260,7 +264,6 @@ public class Redis_To_Mysql {
 		}
 		
 		//释放内存
-		redisserver=null;
 		key=null;
 		cdate=null;
 		imsi=null;
