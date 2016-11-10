@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.codec.binary.Base64;
@@ -38,7 +39,7 @@ public class Redis_To_Mysql {
 		{
 			try {
 				Redis_To_Mysql.HotSearchDetailSet();					//推送当前用户对应的热搜记录
-				Redis_To_Mysql.PersisHotspotImsiSet();      			//推送当天热点区域的imsi数据明细，ok
+				//Redis_To_Mysql.PersisHotspotImsiSet();      			//推送当天热点区域的imsi数据明细，ok
 				Thread.sleep(1000*60*60);									//每隔1个小时推送
 			} catch (InterruptedException e) {
 				logger.info(" Thread Flush_Redis_DB crashes: "+e.getMessage());
@@ -67,7 +68,7 @@ public class Redis_To_Mysql {
 		
 		TreeSet<String> keyset=null;
 		Iterator<String> keylist=null;
-		TreeSet<String> hotsearchset=null;
+		Set<String> hotsearchset=null;
 		String[] tmpvalues=null;
 		String[] tmpzh=null;
 		
@@ -97,20 +98,21 @@ public class Redis_To_Mysql {
 					while(keylist.hasNext())
 					{
 						key=keylist.next().toString(); //获取每个key
-						hotsearchset=redisserver.sscan(key, null); //获取key中的全部热搜信息
+						hotsearchset=redisserver.smembers(key); //获取key中的全部热搜信息
 						size=key.lastIndexOf("_");
 						if(hotsearchset!=null&&hotsearchset.size()>0&&size>=25){
 							imsi=key.substring(size+1); //获取imsi
 							for(String tmp:hotsearchset){
+								tmp=tmp.replaceAll("[\\s\b\r\f\n\t]*", "");
 								tmpvalues=tmp.split("#"); 		//获取key下的每条记录
-								if(tmpvalues.length>=6){    	//tmpvalues存放的就是记录的拆分字段 tac#ci#zhbase64list#intsid#host#sdate;
+								if(tmpvalues.length==6){    	//6 tmpvalues存放的就是记录的拆分字段 tac#ci#zhbase64list#intsid#host#sdate;
 									tmpzh=tmpvalues[2].split(",");
 									value=",";
 									for(int i=0;i<tmpzh.length;i++){
 										value+=new String(Base64.decodeBase64(tmpzh[i]),"UTF-8");
 									}
 									if(value.length()>0)tmpvalues[2]=value.substring(1);//完成对base64的解码
-									//tmpvalues[3]=tmpvalues[4].replaceAll("[\\s\b\r\f\n\t]*", "");//去除域名中多余的回车，空格等
+									//tmpvalues[3]=tmpvalues[3].replaceAll("[\\s\b\r\f\n\t]*", "");//去除域名中多余的回车，空格等
 									key="ref_wtag_"+tmpvalues[3];
 									key=redisserver.get(key);
 									if(key!=null&&key.contains("#")==true){
@@ -118,7 +120,8 @@ public class Redis_To_Mysql {
 										tmpvalues[3]=key.substring(0,size); //搜索大类别
 										tmpvalues[4]=key.substring(size+1);//去除域名中多余的回车，空格等并加上域名的中文翻译tmpvalues[4].replaceAll("[\\s\b\r\f\n\t]*", "")+":"+
 									}
-									value=imsi+"|"+tmpvalues[0]+"|"+tmpvalues[1]+"|"+tmpvalues[2]+"|"+tmpvalues[3]+"|"+tmpvalues[4]+"|"+tmpvalues[5];
+									value=imsi+"|"+tmpvalues[0]+"|"+tmpvalues[1]+"|"+tmpvalues[2]+"|"+tmpvalues[3]+"|"+tmpvalues[4]+"|"+tmpvalues[5]+"\n";//;
+									
 									fw.write(value); //将记录写入文件
 									num=num+1;
 								}
