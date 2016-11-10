@@ -101,7 +101,7 @@ public class RedisInstanceDataTest {
 						decch=redisServer.get(key);
 						key="ref_wtag_"+chineselist.get(i);
 						key=redisServer.get(key);
-						if(key!=null&&key.contains("网络购物"))System.out.println(chineselist.get(i)+"	"+key+"	"+decch);
+						if(key.contains("网络购物"))System.out.println(chineselist.get(i)+"	"+key+"	"+decch);
 					}
 				}
 			}
