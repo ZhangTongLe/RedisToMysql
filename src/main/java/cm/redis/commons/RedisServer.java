@@ -22,7 +22,7 @@ import redis.clients.jedis.SortingParams;
  */
 public class RedisServer {
 	//构建redis连接池对象实例
-	private static JedisPool jedisPool=null;
+	private static JedisPool jedisPool;
 
 	//单例模式实现客户端管理类
 	private static RedisServer INSTANCE=new RedisServer();
