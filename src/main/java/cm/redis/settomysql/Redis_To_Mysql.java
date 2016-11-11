@@ -6,7 +6,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.codec.binary.Base64;
@@ -35,10 +34,10 @@ public class Redis_To_Mysql {
 		while(true)
 		{
 			try {
-				Redis_To_Mysql.HotSearchDetailSet();					//推送当前用户对应的热搜记录
-				Thread.sleep(1000*60*30);									//每隔30分钟推送
 				Redis_To_Mysql.PersisHotspotImsiSet();      			//推送当天热点区域的imsi数据明细，ok
-				Thread.sleep(1000*60*30);									//每隔30分钟推送
+				Thread.sleep(1000*60*5);									//每隔30分钟推送
+				Redis_To_Mysql.HotSearchDetailSet();					//推送当前用户对应的热搜记录
+				Thread.sleep(1000*60*10);									//每隔30分钟推送				
 			} catch (InterruptedException e) {
 				logger.info(" Thread Flush_Redis_DB crashes: "+e.getMessage());
 			}
