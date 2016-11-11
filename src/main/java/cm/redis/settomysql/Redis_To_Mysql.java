@@ -63,7 +63,7 @@ public class Redis_To_Mysql {
 		
 		TreeSet<String> keyset=null;
 		Iterator<String> keylist=null;
-		Set<String> hotsearchset=null;
+		TreeSet<String> hotsearchset=null;
 		String[] tmpvalues=null;
 		String[] tmpzh=null;
 		
@@ -93,7 +93,7 @@ public class Redis_To_Mysql {
 					while(keylist.hasNext())
 					{
 						key=keylist.next().toString(); //获取每个key
-						hotsearchset=redisserver.smembers(key); //获取key中的全部热搜信息
+						hotsearchset=redisserver.sscan(key,null); //获取key中的全部热搜信息
 						size=key.lastIndexOf("_");
 						if(hotsearchset!=null&&hotsearchset.size()>0&&size>=25){
 							imsi=key.substring(size+1); //获取imsi
