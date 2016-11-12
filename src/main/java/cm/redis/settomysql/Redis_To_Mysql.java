@@ -8,7 +8,7 @@ import java.sql.Statement;
 import java.util.Iterator;
 import java.util.TreeSet;
 
-import org.apache.commons.codec.binary.Base64;
+//import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
 import cm.redis.commons.RedisServer;
@@ -35,122 +35,13 @@ public class Redis_To_Mysql {
 		{
 			try {
 				Redis_To_Mysql.PersisHotspotImsiSet();      			//推送当天热点区域的imsi数据明细，ok
-				Thread.sleep(1000*60*5);									//每隔30分钟推送
-				Redis_To_Mysql.HotSearchDetailSet();					//推送当前用户对应的热搜记录
-				Thread.sleep(1000*60*10);									//每隔30分钟推送				
+				Thread.sleep(1000*60*60);									//每隔60分钟推送				
 			} catch (InterruptedException e) {
 				logger.info(" Thread Flush_Redis_DB crashes: "+e.getMessage());
 			}
 		}
 	}
-	
-	/**
-	 * 每隔1小时，抓取当天用户对应的全部搜索信息，写入文件中，并采用脚本定时传输到18服务器即可
-	 * 表格，字段格式  IMSI|TAC|搜索词|搜索类型|网站|时间
-	 */
-	public static void HotSearchDetailSet(){
-		RedisServer redisserver=RedisServer.getInstance();
-		//从redis获取对应key集合相关参数
-		String key=null;
-		String cdate=null;
-		
-		String imsi=null;
-		String value=null;
 
-		int num=0;
-		int size=0;
-		
-		TreeSet<String> keyset=null;
-		Iterator<String> keylist=null;
-		TreeSet<String> hotsearchset=null;
-		String[] tmpvalues=null;
-		String[] tmpzh=null;
-		
-		//形成数据文件参数
-		String filepath=null;
-		File file = null;
-		FileWriter fw=null;
-		
-		logger.info(" Start to get imsi hot search info to files");
-		try{
-			cdate=TimeFormatter.getDate2();
-			
-			filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_imsihotsearch_detail.txt";
-			file = new File(filepath);
-			if (!file.isDirectory()) { 
-				fw=new FileWriter(file);
-				fw.write("");
-				
-				keyset=redisserver.scan("mfg4_"+cdate+"_SrhDetail_*");
-				if(keyset==null||keyset.size()<=0){
-					cdate=TimeFormatter.getYestoday2();
-					keyset=redisserver.scan("mfg4_"+cdate+"_SrhDetail_*");
-				}
-				if(keyset!=null&&keyset.size()>0)
-				{
-					keylist=keyset.iterator();
-					while(keylist.hasNext())
-					{
-						key=keylist.next().toString(); //获取每个key
-						hotsearchset=redisserver.sscan(key,null); //获取key中的全部热搜信息
-						size=key.lastIndexOf("_");
-						if(hotsearchset!=null&&hotsearchset.size()>0&&size>=25){
-							imsi=key.substring(size+1); //获取imsi
-							for(String tmp:hotsearchset){
-								tmp=tmp.replaceAll("[\\s\b\r\f\n\t]*", "");
-								tmpvalues=tmp.split("#"); 		//获取key下的每条记录
-								if(tmpvalues.length==6){    	//6 tmpvalues存放的就是记录的拆分字段 tac#ci#zhbase64list#intsid#host#sdate;
-									tmpzh=tmpvalues[2].split(",");
-									value="";
-									for(int i=0;i<tmpzh.length;i++){
-										value+=","+new String(Base64.decodeBase64(tmpzh[i]),"UTF-8");
-									}
-									if(value.length()>0)tmpvalues[2]=value.substring(1);//完成对base64的解码
-									//tmpvalues[3]=tmpvalues[3].replaceAll("[\\s\b\r\f\n\t]*", "");//去除域名中多余的回车，空格等
-									key="ref_wtag_"+tmpvalues[3];
-									key=redisserver.get(key);
-									if(key!=null&&key.contains("#")==true){
-										size=key.indexOf("#");
-										tmpvalues[3]=key.substring(0,size); //搜索大类别
-										tmpvalues[4]=key.substring(size+1);//去除域名中多余的回车，空格等并加上域名的中文翻译tmpvalues[4].replaceAll("[\\s\b\r\f\n\t]*", "")+":"+
-									}
-									value=imsi+"|"+tmpvalues[0]+"|"+tmpvalues[1]+"|"+tmpvalues[2]+"|"+tmpvalues[3]+"|"+tmpvalues[4]+"|"+tmpvalues[5]+"\n";//;
-									
-									fw.write(value); //将记录写入文件
-									num=num+1;
-								}
-								tmpvalues=null;
-								tmpzh=null;
-							}
-						}
-					}
-				}
-				fw.close();
-				logger.info(" Complete get all imsi hot search info, gets "+num+" records");
-			}
-		} catch (Exception ex) {
-			logger.info(" Thread HotSearchDetailSet crashes: "+ex.getMessage());
-		}
-		
-		//释放内存
-		redisserver=null;
-		key=null;
-		cdate=null;
-		imsi=null;
-		value=null;
-		
-		keyset=null;
-		keylist=null;
-		hotsearchset=null;
-		tmpvalues=null;
-		tmpzh=null;
-		
-		filepath=null;
-		file=null;
-		fw=null;
-	}
-	
-	
 	/**
 	 * 每隔1小时，抓取当天hotspotid对应的imsi集合全部信息到mysql的表中
 	 * 表格，字段data_time，hotspotid，imsi
@@ -282,6 +173,114 @@ public class Redis_To_Mysql {
 		stmt=null;
 	}
 }
+
+//Redis_To_Mysql.HotSearchDetailSet();				//推送当前用户对应的热搜记录
+
+/**
+ * 每隔1小时，抓取当天用户对应的全部搜索信息，写入文件中，并采用脚本定时传输到18服务器即可
+ * 表格，字段格式  IMSI|TAC|搜索词|搜索类型|网站|时间
+ */
+//public static void HotSearchDetailSet(){
+//	RedisServer redisserver=RedisServer.getInstance();
+//	//从redis获取对应key集合相关参数
+//	String key=null;
+//	String cdate=null;
+//	
+//	String imsi=null;
+//	String value=null;
+//
+//	int num=0;
+//	int size=0;
+//	
+//	TreeSet<String> keyset=null;
+//	Iterator<String> keylist=null;
+//	TreeSet<String> hotsearchset=null;
+//	String[] tmpvalues=null;
+//	String[] tmpzh=null;
+//	
+//	//形成数据文件参数
+//	String filepath=null;
+//	File file = null;
+//	FileWriter fw=null;
+//	
+//	logger.info(" Start to get imsi hot search info to files");
+//	try{
+//		cdate=TimeFormatter.getDate2();
+//		
+//		filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_imsihotsearch_detail.txt";
+//		file = new File(filepath);
+//		if (!file.isDirectory()) { 
+//			fw=new FileWriter(file);
+//			fw.write("");
+//			
+//			keyset=redisserver.scan("mfg4_"+cdate+"_SrhDetail_*");
+//			if(keyset==null||keyset.size()<=0){
+//				cdate=TimeFormatter.getYestoday2();
+//				keyset=redisserver.scan("mfg4_"+cdate+"_SrhDetail_*");
+//			}
+//			if(keyset!=null&&keyset.size()>0)
+//			{
+//				keylist=keyset.iterator();
+//				while(keylist.hasNext())
+//				{
+//					key=keylist.next().toString(); //获取每个key
+//					hotsearchset=redisserver.sscan(key,null); //获取key中的全部热搜信息
+//					size=key.lastIndexOf("_");
+//					if(hotsearchset!=null&&hotsearchset.size()>0&&size>=25){
+//						imsi=key.substring(size+1); //获取imsi
+//						for(String tmp:hotsearchset){
+//							tmp=tmp.replaceAll("[\\s\b\r\f\n\t]*", "");
+//							tmpvalues=tmp.split("#"); 		//获取key下的每条记录
+//							if(tmpvalues.length==6){    	//6 tmpvalues存放的就是记录的拆分字段 tac#ci#zhbase64list#intsid#host#sdate;
+//								tmpzh=tmpvalues[2].split(",");
+//								value="";
+//								for(int i=0;i<tmpzh.length;i++){
+//									value+=","+new String(Base64.decodeBase64(tmpzh[i]),"UTF-8");
+//								}
+//								if(value.length()>0)tmpvalues[2]=value.substring(1);//完成对base64的解码
+//								//tmpvalues[3]=tmpvalues[3].replaceAll("[\\s\b\r\f\n\t]*", "");//去除域名中多余的回车，空格等
+//								key="ref_wtag_"+tmpvalues[3];
+//								key=redisserver.get(key);
+//								if(key!=null&&key.contains("#")==true){
+//									size=key.indexOf("#");
+//									tmpvalues[3]=key.substring(0,size); //搜索大类别
+//									tmpvalues[4]=key.substring(size+1);//去除域名中多余的回车，空格等并加上域名的中文翻译tmpvalues[4].replaceAll("[\\s\b\r\f\n\t]*", "")+":"+
+//								}
+//								value=imsi+"|"+tmpvalues[0]+"|"+tmpvalues[1]+"|"+tmpvalues[2]+"|"+tmpvalues[3]+"|"+tmpvalues[4]+"|"+tmpvalues[5]+"\n";//;
+//								
+//								fw.write(value); //将记录写入文件
+//								num=num+1;
+//							}
+//							tmpvalues=null;
+//							tmpzh=null;
+//						}
+//					}
+//				}
+//			}
+//			fw.close();
+//			logger.info(" Complete get all imsi hot search info, gets "+num+" records");
+//		}
+//	} catch (Exception ex) {
+//		logger.info(" Thread HotSearchDetailSet crashes: "+ex.getMessage());
+//	}
+//	
+//	//释放内存
+//	redisserver=null;
+//	key=null;
+//	cdate=null;
+//	imsi=null;
+//	value=null;
+//	
+//	keyset=null;
+//	keylist=null;
+//	hotsearchset=null;
+//	tmpvalues=null;
+//	tmpzh=null;
+//	
+//	filepath=null;
+//	file=null;
+//	fw=null;
+//}
 
 //TreeSet<String> keys=null; 
 //Iterator<String> keylist =null;
