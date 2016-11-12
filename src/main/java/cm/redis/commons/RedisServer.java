@@ -60,9 +60,12 @@ public class RedisServer {
 	}
 	
 	//关闭连接池，销毁连接池，在web清理时进行调用
-	public void close(){
+	public static void close(){
 		 try {
-			 if(jedisPool!=null)jedisPool.close();
+			 if(jedisPool!=null){
+				 jedisPool.close();
+				 INSTANCE=null;
+			 }
 		} catch (Exception e) {
 			logger.error("Close jedisPool error: ", e);  
 		}

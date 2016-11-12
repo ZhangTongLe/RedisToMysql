@@ -35,6 +35,7 @@ public class Redis_To_Mysql {
 		{
 			try {
 				Redis_To_Mysql.PersisHotspotImsiSet();      			//推送当天热点区域的imsi数据明细，ok
+				RedisServer.close();
 				Thread.sleep(1000*60*60);									//每隔60分钟推送				
 			} catch (InterruptedException e) {
 				logger.info(" Thread Flush_Redis_DB crashes: "+e.getMessage());
