@@ -178,6 +178,6 @@ public class RedisInstanceDataTest {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		redisServer.close();
+		RedisServer.close();
 	}
 }
