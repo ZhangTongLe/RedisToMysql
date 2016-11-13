@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.TreeSet;
 
 //import org.apache.commons.codec.binary.Base64;
@@ -53,7 +54,7 @@ public class Redis_To_Mysql {
 		String cdate=null;
 		String imsi=null;
 		
-		TreeSet<String> hotspotset=null;
+		Set<String> hotspotset=null;
 		Iterator<String> scanreslist=null;
 		TreeSet<String> keyset=null;
 		Iterator<String> keylist=null;
@@ -85,7 +86,7 @@ public class Redis_To_Mysql {
 			cdate=TimeFormatter.getDate2();        						//获取当前日期YYYY-MM-DD
 			num=0;//统计记录
 			key="ref_hsp_set";
-			hotspotset=redisserver.sscan(key, null);						//扫描获取全部的集合数据
+			hotspotset=redisserver.smembers(key);						//扫描获取全部的集合数据
 			if(hotspotset!=null&&hotspotset.size()>0){
 				data_time=TimeFormatter.getNow(); 						//获取当前时间YYYY-MM-DD HH:mm:ss
 				filepath=ResourcesConfig.SYN_SERVER_DATAFILE+"tb_mofang_hotspot_detail.txt";
