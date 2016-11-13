@@ -122,15 +122,18 @@ public class Redis_To_Mysql {
 										key="'"+data_time+"','"+id+"','"+imsi+"','"+firsttime+"','"+lasttime+"'\n";
 										fw.write(key);
 										num=num+1;
+									}else{
+										logger.info(" No info gets for hotspot "+id);
+										break;
 									}
 								}
 							}
 						}
 					}
 					fw.close();
-					logger.info(" Complete get hotspot imsi set, get "+num+" records");
 					if(num>0)//有数据存在才考虑进行数据库录入
 					{
+						logger.info(" Complete get hotspot imsi set, get "+num+" records");
 						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
 						conn=DriverManager.getConnection(url);
 						stmt =conn.createStatement();
