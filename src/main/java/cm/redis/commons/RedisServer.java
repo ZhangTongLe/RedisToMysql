@@ -182,6 +182,7 @@ public class RedisServer {
         			}
         		}
         		if(jedis!=null)jedis.close();//归还资源
+        		jedis=null;
         	}while(cursor.equals("0")==false); 
         } catch(Exception ex){  
         	logger.info("Scan keys error: "+ex.getMessage());  
@@ -454,6 +455,7 @@ public class RedisServer {
         			}
         		}
         		if(jedis!=null)jedis.close();//归还资源
+        		jedis=null;
         	}while(cursor.equals("0")==false); 
         } catch(Exception ex){  
         	logger.info("Scan keys error: "+ex.getMessage());  
