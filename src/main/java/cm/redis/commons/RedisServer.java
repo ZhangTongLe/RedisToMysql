@@ -32,16 +32,13 @@ public class RedisServer {
 	//初始化构造函数
 	private RedisServer()
 	{
-		if(jedisPool==null)
-		{
-			//构建jedis连接池配置参数
-			JedisPoolConfig config = new JedisPoolConfig();
-	        config.setMaxTotal(ResourcesConfig.MAX_ACTIVE);
-	        config.setMaxIdle(ResourcesConfig.MAX_IDLE);
-	        config.setMaxWaitMillis(ResourcesConfig.MAX_WAIT);
-	        config.setTestOnBorrow(ResourcesConfig.TEST_ON_BORROW);
-	        jedisPool=new JedisPool(config,ResourcesConfig.REDIS_SERVER_IP, ResourcesConfig.REDIS_SERVER_PORT,ResourcesConfig.TIMEOUT);
-		}
+		//构建jedis连接池配置参数
+		JedisPoolConfig config = new JedisPoolConfig();
+        config.setMaxTotal(ResourcesConfig.MAX_ACTIVE);
+        config.setMaxIdle(ResourcesConfig.MAX_IDLE);
+        config.setMaxWaitMillis(ResourcesConfig.MAX_WAIT);
+        config.setTestOnBorrow(ResourcesConfig.TEST_ON_BORROW);
+        jedisPool=new JedisPool(config,ResourcesConfig.REDIS_SERVER_IP, ResourcesConfig.REDIS_SERVER_PORT,ResourcesConfig.TIMEOUT);
 	}
 	
 	/**
@@ -64,10 +61,11 @@ public class RedisServer {
 		 try {
 			 if(jedisPool!=null){
 				 jedisPool.close();
+				 jedisPool=null;
 				 INSTANCE=null;
 			 }
 		} catch (Exception e) {
-			logger.error("Close jedisPool error: ", e);  
+			logger.error(" Close jedisPool error: ", e);  
 		}
 	}
 
@@ -143,11 +141,11 @@ public class RedisServer {
         	scankey=jedis.scan(cursor, params);
             return scankey;
 		 } catch(Exception ex){  
-            logger.info("Scan keys error: "+ex.getMessage());  
-            return null;
+            logger.info("Scan keys error: "+ex.getMessage());   
 		 } finally{   
         	if(jedis!=null)jedis.close();//归还资源  
-		 }  
+		 }
+		 return null;
 	}
 	
 	/**
