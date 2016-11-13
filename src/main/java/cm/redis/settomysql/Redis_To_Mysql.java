@@ -81,6 +81,8 @@ public class Redis_To_Mysql {
 				+"&password="+ResourcesConfig.MYSQL_PASSWD+"&characterEncoding=UTF8";
 		Statement stmt=null;
 		
+		boolean mysqlflag=true;
+		
 		logger.info(" Start to get hotspot imsi set redis-keys");
 		try{				
 			cdate=TimeFormatter.getDate2();        						//获取当前日期YYYY-MM-DD
@@ -94,7 +96,7 @@ public class Redis_To_Mysql {
 				if (!file.isDirectory()) { 
 					fw=new FileWriter(file);
 					fw.write("");
-					
+					mysqlflag=true;
 					scanreslist = hotspotset.iterator();
 					while(scanreslist.hasNext())
 					{
@@ -124,6 +126,7 @@ public class Redis_To_Mysql {
 										num=num+1;
 									}else{
 										logger.info(" No info gets for hotspot "+id);
+										mysqlflag=false;
 										break;
 									}
 								}
@@ -131,7 +134,7 @@ public class Redis_To_Mysql {
 						}
 					}
 					fw.close();
-					if(num>0)//有数据存在才考虑进行数据库录入
+					if(num>0&&mysqlflag==true)//有数据存在才考虑进行数据库录入
 					{
 						logger.info(" Complete get hotspot imsi set, get "+num+" records");
 						Class.forName(ResourcesConfig.MYSQL_SERVER_DRIVER);
