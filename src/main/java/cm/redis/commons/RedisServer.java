@@ -167,8 +167,8 @@ public class RedisServer {
         	cursor="0";
         	params.match(pattern);
         	params.count(10000);
-        	jedis=jedisPool.getResource();  //获取jedis连接池
         	do{
+        		jedis=jedisPool.getResource();  //获取jedis连接池
         		scankey=jedis.scan(cursor, params);
         		if(scankey!=null)
         		{
@@ -181,6 +181,7 @@ public class RedisServer {
         				}
         			}
         		}
+        		if(jedis!=null)jedis.close();//归还资源
         	}while(cursor.equals("0")==false); 
         } catch(Exception ex){  
         	logger.info("Scan keys error: "+ex.getMessage());  
@@ -437,9 +438,9 @@ public class RedisServer {
         try {
         	cursor="0";
         	if(pattern!=null)params.match(pattern);
-        	params.count(500);
-        	jedis=jedisPool.getResource();  //获取jedis连接池
+        	params.count(1000);  	
         	do{
+        		jedis=jedisPool.getResource();  //获取jedis连接池
         		scankey=jedis.sscan(key, cursor, params);
         		if(scankey!=null)
         		{
@@ -452,6 +453,7 @@ public class RedisServer {
         				}
         			}
         		}
+        		if(jedis!=null)jedis.close();//归还资源
         	}while(cursor.equals("0")==false); 
         } catch(Exception ex){  
         	logger.info("Scan keys error: "+ex.getMessage());  
