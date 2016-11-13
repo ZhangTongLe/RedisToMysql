@@ -168,7 +168,7 @@ public class RedisServer {
         try {
         	cursor="0";
         	params.match(pattern);
-        	params.count(50);
+        	params.count(10000);
         	jedis=jedisPool.getResource();  //获取jedis连接池
         	do{
         		scankey=jedis.scan(cursor, params);
