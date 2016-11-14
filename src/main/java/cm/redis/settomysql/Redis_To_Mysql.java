@@ -101,13 +101,15 @@ public class Redis_To_Mysql {
 					{
 						hotid=scanreslist.next().toString();
 						id=hotid; 		//获取hotspotid
-						if(mysqlflag==true){
+						if(mysqlflag==false){
+							logger.info(" Scan opt and get opt will try again in 20 minnutes... ");
+							break;
+						}
+						keyset=redisserver.scan("mfg4_"+cdate+"_hspimsi_"+hotid+"_*");
+						if(keyset==null||keyset.size()<=0){
+							cdate=TimeFormatter.getYestoday2();
 							keyset=redisserver.scan("mfg4_"+cdate+"_hspimsi_"+hotid+"_*");
-							if(keyset==null||keyset.size()<=0){
-								cdate=TimeFormatter.getYestoday2();
-								keyset=redisserver.scan("mfg4_"+cdate+"_hspimsi_"+hotid+"_*");
-							}
-						}else keyset=null;
+						}
 						if(keyset!=null&&keyset.size()>0)
 						{
 							keylist=keyset.iterator();
@@ -132,6 +134,8 @@ public class Redis_To_Mysql {
 									}
 								}
 							}
+						}else{
+							mysqlflag=false;
 						}
 					}
 					fw.close();
