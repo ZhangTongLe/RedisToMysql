@@ -61,9 +61,9 @@ public class RedisServer {
 		 try {
 			 if(jedisPool!=null){
 				 jedisPool.close();
-				 jedisPool=null;
-				 INSTANCE=null;
 			 }
+			 jedisPool=null;
+			 INSTANCE=null;
 		} catch (Exception e) {
 			logger.error(" Close jedisPool error: ", e);  
 		}
