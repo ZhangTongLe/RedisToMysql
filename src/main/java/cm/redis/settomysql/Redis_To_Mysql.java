@@ -36,7 +36,7 @@ public class Redis_To_Mysql {
 			try {
 				Redis_To_Mysql.PersisHotspotImsiSet();      			//推送当天热点区域的imsi数据明细，ok
 				RedisServer.close();
-				Thread.sleep(1000*60*60);									//每隔60分钟推送				
+				Thread.sleep(1000*60*20);									//每隔20分钟扫描一次				
 			} catch (InterruptedException e) {
 				logger.info(" Thread Flush_Redis_DB crashes: "+e.getMessage());
 			}
@@ -101,11 +101,13 @@ public class Redis_To_Mysql {
 					{
 						hotid=scanreslist.next().toString();
 						id=hotid; 		//获取hotspotid
-						keyset=redisserver.scan("mfg4_"+cdate+"_hspimsi_"+hotid+"_*");
-						if(keyset==null||keyset.size()<=0){
-							cdate=TimeFormatter.getYestoday2();
+						if(mysqlflag==true){
 							keyset=redisserver.scan("mfg4_"+cdate+"_hspimsi_"+hotid+"_*");
-						}
+							if(keyset==null||keyset.size()<=0){
+								cdate=TimeFormatter.getYestoday2();
+								keyset=redisserver.scan("mfg4_"+cdate+"_hspimsi_"+hotid+"_*");
+							}
+						}else keyset=null;
 						if(keyset!=null&&keyset.size()>0)
 						{
 							keylist=keyset.iterator();
