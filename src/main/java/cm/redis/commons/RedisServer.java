@@ -458,7 +458,7 @@ public class RedisServer {
         		jedis=null;
         	}while(cursor.equals("0")==false); 
         } catch(Exception ex){  
-        	logger.info("Scan keys error: "+ex.getMessage());  
+        	logger.info("Sscan members error: "+ex.getMessage());  
             return null;
         } finally{  
         	if(jedis!=null)jedis.close();//归还资源  
