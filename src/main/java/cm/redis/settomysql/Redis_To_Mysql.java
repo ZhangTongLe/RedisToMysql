@@ -134,7 +134,7 @@ public class Redis_To_Mysql {
 									}
 								}
 							}
-						}else{
+						}else if(keyset==null){
 							mysqlflag=false;
 						}
 					}
