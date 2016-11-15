@@ -38,7 +38,8 @@ public class RedisServer {
         config.setMaxIdle(ResourcesConfig.MAX_IDLE);
         config.setMaxWaitMillis(ResourcesConfig.MAX_WAIT);
         config.setTestOnBorrow(ResourcesConfig.TEST_ON_BORROW);
-        jedisPool=new JedisPool(config,ResourcesConfig.REDIS_SERVER_IP, ResourcesConfig.REDIS_SERVER_PORT,ResourcesConfig.TIMEOUT);
+        jedisPool=new JedisPool(config,ResourcesConfig.REDIS_SERVER_IP, 
+        		ResourcesConfig.REDIS_SERVER_PORT,ResourcesConfig.TIMEOUT);
 	}
 	
 	/**
