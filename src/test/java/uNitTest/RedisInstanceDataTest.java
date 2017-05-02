@@ -109,8 +109,8 @@ public class RedisInstanceDataTest {
 		try {
 			if(redisServer!=null){
 				//对集合key进行排序
-		        key="mfg4_"+tdate+"_IntidSet";//mfg4_EBusiSet,"mfg4_"+tdate+"_ChineseSet","mfg4_BaiduSet","mfg4_"+tdate+"_AppidSet","mfg4_"+tdate+"_IntidSet"
-				sortingParams.by("mfg4_"+tdate+"_IntidUse_*");//_Zh_*,mfg4_"+tdate+"_ebusiw_*,_baiduw_*,_AppUse_*,_IntidUse_*
+		        key="mfg4_"+tdate+"_AppidSet";//mfg4_EBusiSet,"mfg4_"+tdate+"_ChineseSet","mfg4_BaiduSet","mfg4_"+tdate+"_AppidSet","mfg4_"+tdate+"_IntidSet"
+				sortingParams.by("mfg4_"+tdate+"_AppUse_*");//_Zh_*,mfg4_"+tdate+"_ebusiw_*,_baiduw_*,_AppUse_*,_IntidUse_*
 				sortingParams.desc();
 				sortingParams.limit(0, num);//限定返回结果的数量
 				chineselist=redisServer.redis_sort2(key, sortingParams);
@@ -129,7 +129,7 @@ public class RedisInstanceDataTest {
 //						decch=decch.replace("旗舰店", "");
 //						decch=decch.replace("官方", "");
 						if(StringUtils.contains(decch, "游戏")==true||StringUtils.contains(decch, "视频")==true||StringUtils.contains(decch, "音频")==true){
-						key="mfg4_"+tdate+"_IntidUse_"+chineselist.get(i);//,_ebusiw_,_Zh_,_baiduw_,_AppUse_,_IntidUse_
+						key="mfg4_"+tdate+"_AppUse_"+chineselist.get(i);//,_ebusiw_,_Zh_,_baiduw_,_AppUse_,_IntidUse_
 						System.out.println((i+1)+":"+decch+":"+redisServer.get(key));//
 						}
 					}
