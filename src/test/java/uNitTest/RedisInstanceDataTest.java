@@ -129,8 +129,8 @@ public class RedisInstanceDataTest {
 //						decch=decch.replace("旗舰店", "");
 //						decch=decch.replace("官方", "");
 						if(StringUtils.contains(decch, "游戏")==true||StringUtils.contains(decch, "视频")==true||StringUtils.contains(decch, "音频")==true){
-						key="mfg4_"+tdate+"_AppUse_"+chineselist.get(i);//,_ebusiw_,_Zh_,_baiduw_,_AppUse_,_IntidUse_
-						System.out.println((i+1)+":"+decch+":"+redisServer.get(key));//
+							key="mfg4_"+tdate+"_AppUse_"+chineselist.get(i);//,_ebusiw_,_Zh_,_baiduw_,_AppUse_,_IntidUse_
+							System.out.println((i+1)+":"+decch+":"+redisServer.get(key));//
 						}
 					}
 				}
