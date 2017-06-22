@@ -40,5 +40,13 @@
 		    <artifactId>mariadb-java-client</artifactId>
 		    <version>1.1.8</version>
 		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/xerces/xercesImpl -->
+		<dependency>
+		    <groupId>xerces</groupId>
+		    <artifactId>xercesImpl</artifactId>
+		    <version>2.11.0</version>
+		</dependency>
+		
 	</dependencies>
 </project>
