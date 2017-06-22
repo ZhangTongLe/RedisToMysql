@@ -10,7 +10,9 @@ import redis.clients.jedis.SortingParams;
 //import java.util.Date;  
 //import org.apache.log4j.Logger;
 //
-//import java.io.BufferedReader;  
+//import java.io.BufferedReader;
+//import java.io.File;
+//import java.io.FileInputStream;
 //import java.io.IOException;  
 //import java.io.InputStream;  
 //import java.io.InputStreamReader;  
@@ -202,7 +204,7 @@ public class RedisInstanceDataTest {
 		
 		//测试获取单个号码的上网情况，路径信息
 		try {
-			String imsi="460002735213736";//"ref_imsiphn_460020170543524";13417014512
+			String imsi="460002735213491";//"ref_imsiphn_460020170543524";13417014512
 			//460002735213501,cxb
 			//460002735213495,cyf
 			//460002735217343,zbj
@@ -247,7 +249,7 @@ public class RedisInstanceDataTest {
 //        URLConnection connection = null;
 //        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("cmproxy.gmcc.net", 8081));
 //        try {  
-//            url = new URL("http://api.map.baidu.com/ag/coord/convert?from=0&to=4&x=" + String.valueOf(lng) + "&y="+String.valueOf(lat));  
+//            url = new URL("http://api.map.baidu.com/ag/coord/convert?from=0&to=4&x=" +String.valueOf(lng) + "&y="+String.valueOf(lat));  
 //            connection = url.openConnection(proxy);  
 //            connection.setConnectTimeout(5000);  
 //            connection.setReadTimeout(5000);  
@@ -298,10 +300,31 @@ public class RedisInstanceDataTest {
 //        return latlng;  
 //    }  
 //  
-//    public static void main(String[] args) throws IOException {  
-//        double lng =116.718611; //114.42285333333334;  
-//        double lat =23.369444; //30.459873333333334;  
-//        double[] latlng = RedisInstanceDataTest.postBaidu(lng, lat);  
-//        System.out.println("lng===" + latlng[0] + "  lat===" + latlng[1]);  
+//    public static void main(String[] args) throws IOException {
+//    	String filepath="E:/gps.txt";
+//    	File gpsfile=null;
+//    	gpsfile=new File(filepath);
+//    	double lng =0.0; //114.42285333333334;  
+//    	double lat =0.0; //30.459873333333334;
+//    	String[] recordattr=null;
+//    	double[] result=null;
+//    	if(gpsfile.exists()){
+//    		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filepath)));
+//    		for(String line=br.readLine(); line!=null && line!=""; line=br.readLine()){
+//    			recordattr=line.split(",");
+//    			if(recordattr.length==2)
+//    			{
+//    				lng=Double.valueOf(recordattr[1]);
+//    				lat=Double.valueOf(recordattr[0]);
+//    				result=RedisInstanceDataTest.postBaidu(lng, lat);
+//    				System.out.println(result[1]+","+result[0]);  
+//    			}
+//    		}
+//    		br.close();
+//    	}
+//        //double lng =116.718611; //114.42285333333334;  
+//        //double lat =23.369444; //30.459873333333334;  
+//          
+//        
 //    }  
 }
