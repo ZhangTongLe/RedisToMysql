@@ -214,6 +214,7 @@ public class RedisInstanceDataTest {
 			//460002735213493,mpp
 			//460002735239825,bx
 			//460002735213736,cl
+			//460002735213579,xwj
 			String phnum=null;
 			TreeSet<String> rtinfo=null;
 			if(redisServer!=null){
