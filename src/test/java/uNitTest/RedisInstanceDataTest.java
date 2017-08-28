@@ -3,6 +3,8 @@ package uNitTest;
 import java.util.List;
 import java.util.TreeSet;
 
+import org.apache.commons.codec.binary.Base64;
+
 import cm.redis.commons.RedisServer;
 import cm.redis.commons.TimeFormatter;
 import redis.clients.jedis.SortingParams;
@@ -22,7 +24,6 @@ import redis.clients.jedis.SortingParams;
 //import java.net.URL;  
 //import java.net.URLConnection;  
 //
-//import org.apache.xerces.impl.dv.util.Base64;  
   
 //import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;  
 
@@ -34,7 +35,7 @@ public class RedisInstanceDataTest {
 		String decch=null;
 		SortingParams sortingParams=new SortingParams();
 		List<String> chineselist=null;
-		int num = 5000;
+		int num = 3000;
 		
 //		//数据扫描测试代码段
 //		TreeSet<String> keys=null;
@@ -117,36 +118,36 @@ public class RedisInstanceDataTest {
 		
 //		try {
 //			if(redisServer!=null){
-//				//对集合key进行排序
-//				//tdate=TimeFormatter.getYestoday2();
-//		        key="mfg4_"+tdate+"_ChineseSet";//mfg4_EBusiSet,"mfg4_"+tdate+"_ChineseSet","mfg4_BaiduSet","mfg4_"+tdate+"_AppidSet","mfg4_"+tdate+"_IntidSet"
-//				sortingParams.by("mfg4_"+tdate+"_Zh_*");//_Zh_*,mfg4_"+tdate+"_ebusiw_*,_baiduw_*,_AppUse_*,_IntidUse_*
-//				sortingParams.desc();
+				//对集合key进行排序
+				//tdate=TimeFormatter.getYestoday2();
+//		        key="mfg4_BaiduSet";//mfg4_EBusiSet,"mfg4_"+tdate+"_ChineseSet","mfg4_BaiduSet","mfg4_"+tdate+"_AppidSet","mfg4_"+tdate+"_IntidSet"
+//				sortingParams.by("mfg4_"+tdate+"_baiduw_*");//_Zh_*,mfg4_"+tdate+"_ebusiw_*,_baiduw_*,_AppUse_*,_IntidUse_*
+//.desc();
 //				sortingParams.limit(0, num);//限定返回结果的数量
 //				chineselist=redisServer.redis_sort2(key, sortingParams);
 //				if(chineselist!=null&&chineselist.size()>0){
 //					for(int i=0;i<chineselist.size();i++)
 //					{
-//						//System.out.println(chineselist.get(i));
-//						//key="ref_wtag_"+chineselist.get(i);
+						//System.out.println(chineselist.get(i));
+						//key="ref_wtag_"+chineselist.get(i);
 //						decch=chineselist.get(i);
-//						//System.out.println(decch);
+						//System.out.println(decch);
 //						decch=new String(Base64.decodeBase64(decch));
-////						decch=decch.replace("男士", "");
-////						decch=decch.replace("女士", "");
-////						decch=decch.replace("联通", "");
-////						decch=decch.replace("电信", "");
-////						decch=decch.replace("旗舰店", "");
-////						decch=decch.replace("官方", "");
-//						//if(StringUtils.contains(decch, "游戏")==true||StringUtils.contains(decch, "视频")==true||StringUtils.contains(decch, "音频")==true){
-//						key="mfg4_"+tdate+"_Zh_"+chineselist.get(i);//,_ebusiw_,_Zh_,_baiduw_,_AppUse_,_IntidUse_
+//						decch=decch.replace("男士", "");
+//						decch=decch.replace("女士", "");
+//						decch=decch.replace("联通", "");
+//						decch=decch.replace("电信", "");
+//						decch=decch.replace("旗舰店", "");
+//						decch=decch.replace("官方", "");
+						//if(StringUtils.contains(decch, "游戏")==true||StringUtils.contains(decch, "视频")==true||StringUtils.contains(decch, "音频")==true){
+//						key="mfg4_"+tdate+"_baiduw_"+chineselist.get(i);//,_ebusiw_,_Zh_,_baiduw_,_AppUse_,_IntidUse_
 //						System.out.println((i+1)+":"+decch+":"+redisServer.get(key));//
-//						//}
+						//}
 //					}
 //				}
 //			}
 //		} catch (Exception e) {
-//			// TODO Auto-generated catch block
+			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
 
@@ -204,26 +205,26 @@ public class RedisInstanceDataTest {
 		
 		//测试获取单个号码的上网情况，路径信息
 		try {
-			String imsi="460002735213491";//"ref_imsiphn_460020170543524";13417014512
-			//460002735213501,cxb
-			//460002735213495,cyf
-			//460002735217343,zbj
-			//460002735213524,xxl
-			//460002735213491,xxy
-			//460002735213489,xh
-			//460002735213493,mpp
-			//460002735239825,bx
-			//460002735213736,cl
-			//460002735213579,xwj
+			String imsi="460002735229472";//"ref_imsiphn_460020170543524";13417014512
+//			//460002735213501,cxb
+//			//460002735213495,cyf
+//			//460002735217343,zbj
+//			//460002735213524,xxl
+//			//460002735213491,xxy
+//			//460002735213489,xh
+//			//460002735213493,mpp
+//			//460002735239825,bx
+//			//460002735213736,cl
+//			//460002735213579,xwj
 			String phnum=null;
 			TreeSet<String> rtinfo=null;
 			if(redisServer!=null){
-				//检查对应的号码
+//				//检查对应的号码
 		        key="ref_imsiphn_"+imsi;
 				phnum=redisServer.get(key);
 				System.out.println(phnum);
-				
-				//号码检查通过执行获取隐私信息
+//				
+//				//号码检查通过执行获取隐私信息
 				if(phnum!=null&&phnum.length()==11){
 					key="mfg4_"+tdate+"_imsihot_"+imsi;
 					rtinfo=redisServer.sscan(key, null);
@@ -234,12 +235,11 @@ public class RedisInstanceDataTest {
 					}
 				}
 			}
-
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+//			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+	
 		RedisServer.close();
 	}
 	 
