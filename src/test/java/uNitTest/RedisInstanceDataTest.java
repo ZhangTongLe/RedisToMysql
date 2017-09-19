@@ -1,41 +1,38 @@
 package uNitTest;
 
-import java.util.List;
-import java.util.TreeSet;
-
-import org.apache.commons.codec.binary.Base64;
-
-import cm.redis.commons.RedisServer;
-import cm.redis.commons.TimeFormatter;
-import redis.clients.jedis.SortingParams;
+//import java.util.List;
+//import java.util.TreeSet;
+//import org.apache.commons.codec.binary.Base64;
+//import org.apache.commons.lang.StringUtils;
+//import cm.redis.commons.RedisServer;
+//import cm.redis.commons.TimeFormatter;
+//import redis.clients.jedis.SortingParams;
 //import java.text.SimpleDateFormat;  
 //import java.util.Date;  
 //import org.apache.log4j.Logger;
-//
-//import java.io.BufferedReader;
-//import java.io.File;
-//import java.io.FileInputStream;
-//import java.io.IOException;  
-//import java.io.InputStream;  
-//import java.io.InputStreamReader;  
-//import java.io.OutputStreamWriter;
-//import java.net.Proxy;
-//import java.net.InetSocketAddress;
-//import java.net.URL;  
-//import java.net.URLConnection;  
-//
-  
-//import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;  
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;  
+import java.io.InputStream;  
+import java.io.InputStreamReader;  
+import java.io.OutputStreamWriter;
+import java.net.Proxy;
+import java.net.InetSocketAddress;
+import java.net.URL;  
+import java.net.URLConnection;  
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;  
 
 public class RedisInstanceDataTest {
-	public static void main(String[] args) {
-		RedisServer redisServer=RedisServer.getInstance();
-		String tdate=TimeFormatter.getDate2();
-		String key=null;
-		String decch=null;
-		SortingParams sortingParams=new SortingParams();
-		List<String> chineselist=null;
-		int num = 3000;
+//	public static void main(String[] args) {
+//		RedisServer redisServer=RedisServer.getInstance();
+//		String tdate=TimeFormatter.getDate2();
+//		String key=null;
+//		String decch=null;
+//		SortingParams sortingParams=new SortingParams();
+//		List<String> chineselist=null;
+//		int num = 3000;
 		
 //		//数据扫描测试代码段
 //		TreeSet<String> keys=null;
@@ -118,36 +115,36 @@ public class RedisInstanceDataTest {
 		
 //		try {
 //			if(redisServer!=null){
-				//对集合key进行排序
-				//tdate=TimeFormatter.getYestoday2();
+//				//对集合key进行排序
+//				tdate=TimeFormatter.getYestoday2();
 //		        key="mfg4_BaiduSet";//mfg4_EBusiSet,"mfg4_"+tdate+"_ChineseSet","mfg4_BaiduSet","mfg4_"+tdate+"_AppidSet","mfg4_"+tdate+"_IntidSet"
-//				sortingParams.by("mfg4_"+tdate+"_baiduw_*");//_Zh_*,mfg4_"+tdate+"_ebusiw_*,_baiduw_*,_AppUse_*,_IntidUse_*
-//.desc();
+//				sortingParams.by("mfg4_"+tdate+"_baiduw_*").desc();//_Zh_*,mfg4_"+tdate+"_ebusiw_*,_baiduw_*,_AppUse_*,_IntidUse_*
+//
 //				sortingParams.limit(0, num);//限定返回结果的数量
 //				chineselist=redisServer.redis_sort2(key, sortingParams);
 //				if(chineselist!=null&&chineselist.size()>0){
 //					for(int i=0;i<chineselist.size();i++)
 //					{
-						//System.out.println(chineselist.get(i));
-						//key="ref_wtag_"+chineselist.get(i);
+//						//System.out.println(chineselist.get(i));
+//						key="ref_wtag_"+chineselist.get(i);
 //						decch=chineselist.get(i);
-						//System.out.println(decch);
+//						//System.out.println(decch);
 //						decch=new String(Base64.decodeBase64(decch));
-//						decch=decch.replace("男士", "");
-//						decch=decch.replace("女士", "");
-//						decch=decch.replace("联通", "");
-//						decch=decch.replace("电信", "");
-//						decch=decch.replace("旗舰店", "");
-//						decch=decch.replace("官方", "");
-						//if(StringUtils.contains(decch, "游戏")==true||StringUtils.contains(decch, "视频")==true||StringUtils.contains(decch, "音频")==true){
+////						decch=decch.replace("男士", "");
+////						decch=decch.replace("女士", "");
+////						decch=decch.replace("联通", "");
+////						decch=decch.replace("电信", "");
+////						decch=decch.replace("旗舰店", "");
+////						decch=decch.replace("官方", "");
+//						//if(StringUtils.contains(decch, "游戏")==true||StringUtils.contains(decch, "视频")==true||StringUtils.contains(decch, "音频")==true){
 //						key="mfg4_"+tdate+"_baiduw_"+chineselist.get(i);//,_ebusiw_,_Zh_,_baiduw_,_AppUse_,_IntidUse_
 //						System.out.println((i+1)+":"+decch+":"+redisServer.get(key));//
-						//}
+//						//}
 //					}
 //				}
 //			}
 //		} catch (Exception e) {
-			// TODO Auto-generated catch block
+//			//TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
 
@@ -204,128 +201,132 @@ public class RedisInstanceDataTest {
 		
 		
 		//测试获取单个号码的上网情况，路径信息
-		try {
-			String imsi="460002735229472";//"ref_imsiphn_460020170543524";13417014512
-//			//460002735213501,cxb
-//			//460002735213495,cyf
-//			//460002735217343,zbj
-//			//460002735213524,xxl
-//			//460002735213491,xxy
-//			//460002735213489,xh
-//			//460002735213493,mpp
-//			//460002735239825,bx
-//			//460002735213736,cl
-//			//460002735213579,xwj
-			String phnum=null;
-			TreeSet<String> rtinfo=null;
-			if(redisServer!=null){
-//				//检查对应的号码
-		        key="ref_imsiphn_"+imsi;
-				phnum=redisServer.get(key);
-				System.out.println(phnum);
-//				
-//				//号码检查通过执行获取隐私信息
-				if(phnum!=null&&phnum.length()==11){
-					key="mfg4_"+tdate+"_imsihot_"+imsi;
-					rtinfo=redisServer.sscan(key, null);
-					if(rtinfo!=null){
-						for(String tmp:rtinfo){
-							System.out.println(tmp);
-						}
-					}
-				}
-			}
-		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	
-		RedisServer.close();
-	}
+//		try {
+//			String imsi="460002735229472";//"ref_imsiphn_460020170543524";13417014512
+////			//460002735213501,cxb
+////			//460002735213495,cyf
+////			//460002735217343,zbj
+////			//460002735213524,xxl
+////			//460002735213491,xxy
+////			//460002735213489,xh
+////			//460002735213493,mpp
+////			//460002735239825,bx
+////			//460002735213736,cl
+////			//460002735213579,xwj
+//			String phnum=null;
+//			TreeSet<String> rtinfo=null;
+//			if(redisServer!=null){
+////				//检查对应的号码
+//		        key="ref_imsiphn_"+imsi;
+//				phnum=redisServer.get(key);
+//				System.out.println(phnum);
+////				
+////				//号码检查通过执行获取隐私信息
+//				if(phnum!=null&&phnum.length()==11){
+//					key="mfg4_"+tdate+"_imsihot_"+imsi;
+//					rtinfo=redisServer.sscan(key, null);
+//					if(rtinfo!=null){
+//						for(String tmp:rtinfo){
+//							System.out.println(tmp);
+//						}
+//					}
+//				}
+//			}
+//		} catch (Exception e) {
+////			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	
+//		RedisServer.close();
+//	}
 	 
-//	public static double[] postBaidu(double lng, double lat) {  
-//        double[] latlng = null;  
-//  
-//        URL url = null;  
-//        URLConnection connection = null;
-//        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("cmproxy.gmcc.net", 8081));
-//        try {  
-//            url = new URL("http://api.map.baidu.com/ag/coord/convert?from=0&to=4&x=" +String.valueOf(lng) + "&y="+String.valueOf(lat));  
-//            connection = url.openConnection(proxy);  
-//            connection.setConnectTimeout(5000);  
-//            connection.setReadTimeout(5000);  
-//            connection.setDoOutput(true);  
-//            OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream(), "utf-8");  
-//            out.flush();  
-//            out.close();  
-//  
-//            // 服务器的回应的字串，并解析  
-//            String sCurrentLine;  
-//            String sTotalString;  
-//            sCurrentLine = "";  
-//            sTotalString = "";  
-//            InputStream l_urlStream;  
-//            l_urlStream = connection.getInputStream();  
-//            BufferedReader l_reader = new BufferedReader(new InputStreamReader(l_urlStream));  
-//            while ((sCurrentLine = l_reader.readLine()) != null) {  
-//                if (!sCurrentLine.equals(""))  
-//                    sTotalString += sCurrentLine;  
-//            }  
-//            // System.out.println(sTotalString);  
-//            sTotalString = sTotalString.substring(1, sTotalString.length() - 1);  
-//            // System.out.println(sTotalString);  
-//            String[] results = sTotalString.split("\\,");  
-//            if (results.length == 3) {  
-//                if (results[0].split("\\:")[1].equals("0")) {  
-//                    String mapX = results[1].split("\\:")[1];  
-//                    String mapY = results[2].split("\\:")[1];  
-//                    mapX = mapX.substring(1, mapX.length() - 1);  
-//                    mapY = mapY.substring(1, mapY.length() - 1);  
-//                    mapX = new String(Base64.decode(mapX));  
-//                    mapY = new String(Base64.decode(mapY));  
-//                    // System.out.println(mapX);  
-//                    // System.out.println(mapY);  
-//                    latlng = new double[] { Double.parseDouble(mapX), Double.parseDouble(mapY) };  
-//                } else {  
-//                    System.out.println("error != 0");  
-//                }  
-//            } else {  
-//                System.out.println("String invalid!");  
-//            }  
-//        } catch (Exception e) {  
-//            e.printStackTrace();  
-//            System.out.println("GPS转百度坐标异常！");  
-//        }  
-//        //SimpleDateFormat dateFormat1 = new SimpleDateFormat("HH:mm:ss");  
-//        //log.info("百度GPS===" + dateFormat1.format(new Date()) + " " + latlng[0] + " " + latlng[1]);  
-//        return latlng;  
-//    }  
-//  
-//    public static void main(String[] args) throws IOException {
-//    	String filepath="E:/gps.txt";
-//    	File gpsfile=null;
-//    	gpsfile=new File(filepath);
-//    	double lng =0.0; //114.42285333333334;  
-//    	double lat =0.0; //30.459873333333334;
-//    	String[] recordattr=null;
-//    	double[] result=null;
-//    	if(gpsfile.exists()){
-//    		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filepath)));
-//    		for(String line=br.readLine(); line!=null && line!=""; line=br.readLine()){
-//    			recordattr=line.split(",");
-//    			if(recordattr.length==2)
-//    			{
-//    				lng=Double.valueOf(recordattr[1]);
-//    				lat=Double.valueOf(recordattr[0]);
-//    				result=RedisInstanceDataTest.postBaidu(lng, lat);
-//    				System.out.println(result[1]+","+result[0]);  
-//    			}
-//    		}
-//    		br.close();
-//    	}
-//        //double lng =116.718611; //114.42285333333334;  
-//        //double lat =23.369444; //30.459873333333334;  
-//          
-//        
-//    }  
+	@SuppressWarnings("restriction")
+	public static double[] postBaidu(double lng, double lat) {  
+        double[] latlng = null;  
+  
+        URL url = null;  
+        URLConnection connection = null;
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("cmproxy.gmcc.net", 8081));
+        try {  
+            url = new URL("http://api.map.baidu.com/ag/coord/convert?from=0&to=4&x=" +String.valueOf(lng) + "&y="+String.valueOf(lat));  
+            connection = url.openConnection(proxy);  
+            connection.setConnectTimeout(5000);  
+            connection.setReadTimeout(5000);  
+            connection.setDoOutput(true);  
+            OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream(), "utf-8");  
+            out.flush();  
+            out.close();  
+  
+            // 服务器的回应的字串，并解析  
+            String sCurrentLine;  
+            String sTotalString;  
+            sCurrentLine = "";  
+            sTotalString = "";  
+            InputStream l_urlStream;  
+            l_urlStream = connection.getInputStream();  
+            BufferedReader l_reader = new BufferedReader(new InputStreamReader(l_urlStream));  
+            while ((sCurrentLine = l_reader.readLine()) != null) {  
+                if (!sCurrentLine.equals(""))  
+                    sTotalString += sCurrentLine;  
+            }  
+            // System.out.println(sTotalString);  
+            sTotalString = sTotalString.substring(1, sTotalString.length() - 1);  
+            // System.out.println(sTotalString);  
+            String[] results = sTotalString.split("\\,");  
+            if (results.length == 3) {  
+                if (results[0].split("\\:")[1].equals("0")) {  
+                    String mapX = results[1].split("\\:")[1];  
+                    String mapY = results[2].split("\\:")[1];  
+                    mapX = mapX.substring(1, mapX.length() - 1);  
+                    mapY = mapY.substring(1, mapY.length() - 1);  
+                    mapX = new String(Base64.decode(mapX));  
+                    mapY = new String(Base64.decode(mapY));  
+                    // System.out.println(mapX);  
+                    // System.out.println(mapY);  
+                    latlng = new double[] { Double.parseDouble(mapX), Double.parseDouble(mapY) };  
+                } else {  
+                    System.out.println("error != 0");  
+                }  
+            } else {  
+                System.out.println("String invalid!");  
+            }  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+            System.out.println("GPS转百度坐标异常！");  
+        }  
+        //SimpleDateFormat dateFormat1 = new SimpleDateFormat("HH:mm:ss");  
+        //log.info("百度GPS===" + dateFormat1.format(new Date()) + " " + latlng[0] + " " + latlng[1]);  
+        return latlng;  
+    }  
+  
+    public static void main(String[] args) throws IOException {
+    	String filepath="E:/gps.txt";
+    	int num;
+    	File gpsfile=null;
+    	gpsfile=new File(filepath);
+    	double lng =0.0; //114.42285333333334;  
+    	double lat =0.0; //30.459873333333334;
+    	String[] recordattr=null;
+    	double[] result=null;
+    	if(gpsfile.exists()){
+    		num=1;
+    		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filepath)));
+    		for(String line=br.readLine(); line!=null && line!=""; line=br.readLine()){
+    			recordattr=line.split(",");
+    			if(recordattr.length==2)
+    			{
+    				lng=Double.valueOf(recordattr[1]);
+    				lat=Double.valueOf(recordattr[0]);
+    				result=RedisInstanceDataTest.postBaidu(lng, lat);
+    				System.out.println(num+","+result[1]+","+result[0]);  
+    				num+=1;
+    			}
+    		}
+    		br.close();
+    	}
+        //double lng =116.718611; //114.42285333333334;  
+        //double lat =23.369444; //30.459873333333334;  
+          
+        
+    }  
 }
